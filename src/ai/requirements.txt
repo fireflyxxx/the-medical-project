@@ -1,0 +1,13 @@
+torch
+torchvision
+opencv-python-headless
+pydicom
+numpy
+fastapi
+uvicorn
+python-multipart
+requests
+pandas
+scikit-learn
+tqdm
+ultralytics

@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>超声诊断报告 - 重新设计</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+    body {
+      font-family: 'Inter', 'Noto Serif SC', sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+    }
+
+    .report-paper {
+      background: white;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    .section-title {
+      font-family: 'Noto Serif SC', serif;
+      color: #2c3e50;
+      border-left: 4px solid #3498db;
+      padding-left: 12px;
+      margin-bottom: 16px;
+    }
+
+    .finding-item {
+      position: relative;
+      padding-left: 20px;
+      margin-bottom: 12px;
+      line-height: 1.8;
+    }
+
+    .finding-item::before {
+      content: '';
+      position: absolute;
+      left: 6px;
+      top: 12px;
+      width: 4px;
+      height: 4px;
+      background: #3498db;
+      border-radius: 50%;
+    }
+
+    .medical-term {
+      color: #2c3e50;
+      font-weight: 500;
+    }
+
+    .measurement {
+      font-family: 'JetBrains Mono', monospace;
+      background: #f8f9fa;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 0.9em;
+    }
+
+    .risk-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.85em;
+      font-weight: 500;
+    }
+
+    .risk-high {
+      background: #fee;
+      color: #c53030;
+      border: 1px solid #fc8181;
+    }
+
+    .risk-moderate {
+      background: #fffaf0;
+      color: #c05621;
+      border: 1px solid #fbd38d;
+    }
+
+    .risk-low {
+      background: #f0fdf4;
+      color: #166534;
+      border: 1px solid #86efac;
+    }
+
+    .image-viewer {
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .annotation-marker {
+      position: absolute;
+      border: 2px solid #ef4444;
+      background: rgba(239, 68, 68, 0.1);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .annotation-marker:hover {
+      background: rgba(239, 68, 68, 0.2);
+      border-width: 3px;
+    }
+
+    .annotation-label {
+      position: absolute;
+      background: #ef4444;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+      transform: translateY(-100%);
+      margin-top: -4px;
+    }
+
+    .clinical-note {
+      background: #fffbeb;
+      border-left: 3px solid #f59e0b;
+      padding: 12px 16px;
+      border-radius: 4px;
+      font-size: 0.95em;
+      line-height: 1.7;
+    }
+
+    .signature-area {
+      border-top: 2px solid #e5e7eb;
+      padding-top: 24px;
+      margin-top: 32px;
+    }
+
+    .print-header {
+      display: none;
+    }
+
+    @media print {
+      body {
+        background: white;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-header {
+        display: block;
+      }
+      .report-paper {
+        box-shadow: none;
+      }
+    }
+
+    .editable-field {
+      border: 1px dashed transparent;
+      padding: 2px 4px;
+      border-radius: 3px;
+      transition: all 0.2s;
+      cursor: text;
+    }
+
+    .editable-field:hover {
+      border-color: #cbd5e1;
+      background: #f8fafc;
+    }
+
+    .editable-field:focus {
+      outline: none;
+      border-color: #3498db;
+      background: #eff6ff;
+    }
+  </style>
+</head>
+<body class="p-8">
+  <!-- 工具栏 -->
+  <div class="no-print max-w-6xl mx-auto mb-6 flex justify-between items-center">
+    <div class="flex items-center space-x-3">
+      <button onclick="window.history.back()" class="px-4 py-2 bg-white rounded-lg shadow-sm hover:shadow transition-all flex items-center space-x-2">
+        <span class="iconify" data-icon="solar:arrow-left-bold"></span>
+        <span>返回工作台</span>
+      </button>
+      <div class="text-sm text-gray-600">
+        <span class="font-medium">患者:</span> 李*国 (65岁 男)
+        <span class="mx-2">|</span>
+        <span class="font-medium">ID:</span> 202603120008
+      </div>
+    </div>
+    <div class="flex items-center space-x-2">
+      <button onclick="toggleEditMode()" class="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all flex items-center space-x-2">
+        <span class="iconify" data-icon="solar:pen-bold"></span>
+        <span>编辑模式</span>
+      </button>
+      <button onclick="window.print()" class="px-4 py-2 bg-white rounded-lg shadow-sm hover:shadow transition-all flex items-center space-x-2">
+        <span class="iconify" data-icon="solar:printer-bold"></span>
+        <span>打印</span>
+      </button>
+      <button onclick="exportReport()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all flex items-center space-x-2">
+        <span class="iconify" data-icon="solar:download-bold"></span>
+        <span>导出PDF</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 报告主体 -->
+  <div class="max-w-6xl mx-auto report-paper rounded-xl overflow-hidden">
+    <!-- 打印页眉 -->
+    <div class="print-header text-center py-6 border-b-2">
+      <h1 class="text-2xl font-bold mb-2">某某医院超声医学科</h1>
+      <p class="text-sm text-gray-600">Department of Ultrasound Medicine</p>
+    </div>
+
+    <!-- 报告内容 -->
+    <div class="p-12">
+      <!-- 报告标题 -->
+      <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2" style="font-family: 'Noto Serif SC', serif;">超声诊断报告</h1>
+        <p class="text-sm text-gray-500">Ultrasound Diagnostic Report</p>
+      </div>
+
+      <!-- 患者基本信息 -->
+      <div class="grid grid-cols-2 gap-x-8 gap-y-3 mb-8 pb-6 border-b text-sm">
+        <div class="flex">
+          <span class="text-gray-500 w-24">姓名:</span>
+          <span class="font-medium">李*国</span>
+        </div>
+        <div class="flex">
+          <span class="text-gray-500 w-24">性别:</span>
+          <span class="font-medium">男</span>
+        </div>
+        <div class="flex">
+          <span class="text-gray-500 w-24">年龄:</span>
+          <span class="font-medium">65岁</span>
+        </div>
+        <div class="flex">
+          <span class="text-gray-500 w-24">病历号:</span>
+          <span class="font-medium font-mono">202603120008</span>
+        </div>
+        <div class="flex">
+          <span class="text-gray-500 w-24">检查日期:</span>
+          <span class="font-medium">2026年3月12日</span>
+        </div>
+        <div class="flex">
+          <span class="text-gray-500 w-24">检查时间:</span>
+          <span class="font-medium">10:15</span>
+        </div>
+        <div class="flex col-span-2">
+          <span class="text-gray-500 w-24">检查部位:</span>
+          <span class="font-medium">甲状腺及颈部淋巴结</span>
+        </div>
+        <div class="flex col-span-2">
+          <span class="text-gray-500 w-24">临床诊断:</span>
+          <span class="font-medium">甲状腺结节待查</span>
+        </div>
+      </div>
+
+      <!-- 影像资料 -->
+      <div class="mb-8">
+        <h2 class="section-title text-lg font-semibold">影像资料</h2>
+        <div class="grid grid-cols-3 gap-4">
+          <div class="col-span-2">
+            <div class="image-viewer relative" style="aspect-ratio: 16/10;">
+              <img src="https://modao.cc/agent-py/media/generated_images/2026-03-12/a80216b725af422991f2763676e390fe.jpg"
+                   alt="主要病灶影像"
+                   class="w-full h-full object-cover">
+              <!-- 标注框 -->
+              <div class="annotation-marker" style="left: 33%; top: 35%; width: 130px; height: 95px;">
+                <div class="annotation-label">病灶A</div>
+              </div>
+            </div>
+            <p class="text-xs text-gray-500 mt-2 text-center">图1: 甲状腺右叶横切面，可见低回声结节</p>
+          </div>
+          <div class="space-y-4">
+            <div class="image-viewer" style="aspect-ratio: 4/3;">
+              <img src="https://modao.cc/agent-py/media/generated_images/2026-03-12/e859f627daef4f128898db01905b5f9e.jpg"
+                   alt="纵切面"
+                   class="w-full h-full object-cover">
+            </div>
+            <p class="text-xs text-gray-500 text-center">图2: 纵切面</p>
+            <div class="image-viewer" style="aspect-ratio: 4/3;">
+              <img src="https://modao.cc/agent-py/media/generated_images/2026-03-12/d0f2e52969fe4c30bda76b6df68facc8.jpg"
+                   alt="彩色多普勒"
+                   class="w-full h-full object-cover">
+            </div>
+            <p class="text-xs text-gray-500 text-center">图3: 彩色多普勒血流显像</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 超声所见 -->
+      <div class="mb-8">
+        <h2 class="section-title text-lg font-semibold">超声所见</h2>
+        <div class="space-y-4 text-gray-700">
+          <div>
+            <p class="medical-term mb-2">甲状腺形态与大小:</p>
+            <p class="finding-item">
+              甲状腺位置正常，形态规则。右叶大小约 <span class="measurement">48×18×16mm</span>，
+              左叶大小约 <span class="measurement">46×17×15mm</span>，
+              峡部厚度约 <span class="measurement">3.2mm</span>。
+            </p>
+          </div>
+
+          <div>
+            <p class="medical-term mb-2">实质回声:</p>
+            <p class="finding-item">
+              双侧甲状腺实质回声欠均匀，可见散在点状强回声。
+            </p>
+          </div>
+
+          <div>
+            <p class="medical-term mb-2">结节描述:</p>
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4 my-3">
+              <div class="flex items-start space-x-3">
+                <span class="iconify text-red-500 text-xl mt-1" data-icon="solar:danger-bold"></span>
+                <div class="flex-1">
+                  <p class="font-semibold text-red-800 mb-2">病灶A (右叶中下部):</p>
+                  <div class="space-y-2 text-sm">
+                    <p class="finding-item">
+                      <span class="medical-term">大小:</span>
+                      <span class="measurement">12.8×9.4×15.2mm</span>，体积约 <span class="measurement">0.92cm³</span>
+                    </p>
+                    <p class="finding-item">
+                      <span class="medical-term">形态:</span>
+                      不规则形，纵横比>1 (A/T=1.36)，提示垂直生长趋势
+                    </p>
+                    <p class="finding-item">
+                      <span class="medical-term">边界:</span>
+                      边界不清晰，呈浸润性生长
+                    </p>
+                    <p class="finding-item">
+                      <span class="medical-term">内部回声:</span>
+                      极低回声 (明显低于周围甲状腺组织)
+                    </p>
+                    <p class="finding-item">
+                      <span class="medical-term">钙化:</span>
+                      <span class="text-red-600 font-medium">可见散在微钙化灶</span>，呈点状强回声，后方无声影
+                    </p>
+                    <p class="finding-item">
+                      <span class="medical-term">血流信号:</span>
+                      CDFI显示结节内部及周边血流信号丰富 (Adler III级)
+                    </p>
+                    <p class="finding-item">
+                      <span class="medical-term">后方回声:</span>
+                      无明显衰减
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <p class="medical-term mb-2">颈部淋巴结:</p>
+            <p class="finding-item">
+              右侧颈部VI区可见数枚肿大淋巴结，较大者约 <span class="measurement">8×5mm</span>，
+              皮髓质分界欠清，内部可见点状血流信号。
+            </p>
+          </div>
+
+          <div>
+            <p class="medical-term mb-2">周围结构:</p>
+            <p class="finding-item">
+              气管居中，双侧颈动脉血流通畅。
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 超声提示 -->
+      <div class="mb-8">
+        <h2 class="section-title text-lg font-semibold">超声提示</h2>
+        <div class="space-y-3">
+          <div class="flex items-start space-x-3">
+            <span class="text-gray-400 mt-1">1.</span>
+            <div class="flex-1">
+              <div class="flex items-center space-x-3 mb-2">
+                <span class="font-medium text-gray-800">甲状腺右叶结节</span>
+                <span class="risk-badge risk-high">TI-RADS 4c 高度可疑恶性</span>
+              </div>
+              <p class="text-sm text-gray-600 leading-relaxed">
+                结节具有多项恶性超声特征：纵横比>1、边界不规则、极低回声、微钙化、血流丰富。
+                <span class="font-medium text-red-600">建议穿刺活检明确诊断</span>。
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start space-x-3">
+            <span class="text-gray-400 mt-1">2.</span>
+            <div class="flex-1">
+              <div class="flex items-center space-x-3 mb-2">
+                <span class="font-medium text-gray-800">右侧颈部淋巴结肿大</span>
+                <span class="risk-badge risk-moderate">需关注</span>
+              </div>
+              <p class="text-sm text-gray-600 leading-relaxed">
+                淋巴结形态异常，皮髓质分界不清，不排除转移可能，建议结合穿刺结果综合判断。
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start space-x-3">
+            <span class="text-gray-400 mt-1">3.</span>
+            <div class="flex-1">
+              <div class="flex items-center space-x-3 mb-2">
+                <span class="font-medium text-gray-800">甲状腺弥漫性病变</span>
+                <span class="risk-badge risk-low">良性可能</span>
+              </div>
+              <p class="text-sm text-gray-600 leading-relaxed">
+                双侧甲状腺实质回声欠均匀，考虑慢性甲状腺炎可能，建议结合甲状腺功能检查。
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 临床建议 -->
+      <div class="mb-8">
+        <h2 class="section-title text-lg font-semibold">临床建议</h2>
+        <div class="clinical-note">
+          <p class="mb-3">
+            <span class="iconify text-amber-600 mr-2" data-icon="solar:info-circle-bold"></span>
+            <span class="font-semibold">鉴于该患者甲状腺结节恶性风险较高，建议:</span>
+          </p>
+          <ol class="space-y-2 ml-6">
+            <li class="list-decimal">尽快行<span class="font-medium">超声引导下细针穿刺活检 (FNA)</span>，明确病理性质</li>
+            <li class="list-decimal">完善<span class="font-medium">甲状腺功能全套、甲状腺自身抗体</span>等实验室检查</li>
+            <li class="list-decimal">必要时行<span class="font-medium">颈部增强CT或MRI</span>评估淋巴结及周围侵犯情况</li>
+            <li class="list-decimal">建议<span class="font-medium">内分泌外科或头颈外科</span>会诊，制定进一步诊疗方案</li>
+            <li class="list-decimal">如暂不穿刺，建议<span class="font-medium">1个月后复查超声</span>，密切随访</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- 技术参数 (可折叠) -->
+      <details class="mb-8 no-print">
+        <summary class="cursor-pointer text-sm text-gray-500 hover:text-gray-700 flex items-center space-x-2">
+          <span class="iconify" data-icon="solar:settings-bold"></span>
+          <span>技术参数与质控信息</span>
+        </summary>
+        <div class="mt-4 p-4 bg-gray-50 rounded-lg text-xs text-gray-600 space-y-2">
+          <div class="grid grid-cols-2 gap-4">
+            <div><span class="font-medium">设备型号:</span> GE LOGIQ E9</div>
+            <div><span class="font-medium">探头频率:</span> 6-15MHz 线阵探头</div>
+            <div><span class="font-medium">检查序列:</span> US_AB_98452</div>
+            <div><span class="font-medium">AI辅助模型:</span> UltraGland V3.0.1</div>
+            <div><span class="font-medium">分析时间:</span> 2.3秒</div>
+            <div><span class="font-medium">置信度:</span> 94.2%</div>
+          </div>
+        </div>
+      </details>
+
+      <!-- 签名区 -->
+      <div class="signature-area">
+        <div class="grid grid-cols-2 gap-12">
+          <div>
+            <p class="text-sm text-gray-500 mb-2">检查医师:</p>
+            <div class="flex items-center space-x-4">
+              <div class="w-32 border-b-2 border-gray-300 pb-1">
+                <p class="font-medium">王志远</p>
+              </div>
+              <p class="text-sm text-gray-500">主任医师</p>
+            </div>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500 mb-2">审核医师:</p>
+            <div class="flex items-center space-x-4">
+              <div class="w-32 border-b-2 border-gray-300 pb-1">
+                <p class="font-medium">_____________</p>
+              </div>
+              <p class="text-sm text-gray-500">副主任医师</p>
+            </div>
+          </div>
+        </div>
+        <div class="mt-6 text-right">
+          <p class="text-sm text-gray-500">报告日期: 2026年3月12日</p>
+        </div>
+      </div>
+
+      <!-- 页脚说明 -->
+      <div class="mt-8 pt-6 border-t text-xs text-gray-400 space-y-1">
+        <p>• 本报告仅对送检标本负责，临床诊疗请结合其他检查综合判断</p>
+        <p>• 如对本报告有疑问，请在收到报告后7日内与超声科联系</p>
+        <p>• 报告解释权归本院超声医学科所有</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 编辑工具面板 -->
+  <div id="editPanel" class="no-print fixed right-8 top-1/2 transform -translate-y-1/2 bg-white rounded-xl shadow-2xl p-4 w-64 hidden">
+    <h3 class="font-semibold mb-4 flex items-center">
+      <span class="iconify mr-2 text-blue-600" data-icon="solar:pen-bold"></span>
+      编辑工具
+    </h3>
+    <div class="space-y-3 text-sm">
+      <button class="w-full px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all text-left">
+        <span class="iconify mr-2" data-icon="solar:text-bold"></span>
+        修改描述
+      </button>
+      <button class="w-full px-3 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-all text-left">
+        <span class="iconify mr-2" data-icon="solar:add-circle-bold"></span>
+        添加发现
+      </button>
+      <button class="w-full px-3 py-2 bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-100 transition-all text-left">
+        <span class="iconify mr-2" data-icon="solar:tag-bold"></span>
+        调整分级
+      </button>
+      <button class="w-full px-3 py-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-all text-left">
+        <span class="iconify mr-2" data-icon="solar:gallery-bold"></span>
+        管理影像
+      </button>
+    </div>
+  </div>
+
+  <script>
+    function toggleEditMode() {
+      const panel = document.getElementById('editPanel');
+      panel.classList.toggle('hidden');
+
+      // 切换可编辑字段
+      const editableFields = document.querySelectorAll('.editable-field');
+      editableFields.forEach(field => {
+        field.contentEditable = !field.isContentEditable;
+      });
+    }
+
+    function exportReport() {
+      alert('导出功能：将生成PDF格式的诊断报告');
+      // 实际项目中这里会调用PDF生成API
+    }
+
+    // 图像标注交互
+    document.querySelectorAll('.annotation-marker').forEach(marker => {
+      marker.addEventListener('click', function() {
+        alert('点击标注区域，可查看详细测量数据和AI分析结果');
+      });
+    });
+  </script>
+</body>
+</html>

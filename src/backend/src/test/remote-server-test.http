@@ -1,0 +1,275 @@
+# 环境变量配置：你的服务器IP
+@host = http://47.98.48.220:8080
+//@host = http://116.62.219.49:8080
+### 0. 登录默认的系统管理员 获取 Token
+POST {{host}}/api/v1/account/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin12345"
+}
+
+> {%
+    if (response.status === 200 && response.body.code === 0) {
+        client.global.set("remote_admin_token", response.body.data.token);
+    }
+%}
+
+### 1. 注册账号 (管理员创建医生A)
+POST http://{{host}}/api/v1/account/create
+Content-Type: application/json
+Authorization: Bearer {{remote_admin_token}}
+
+{
+  "username": "techLiu",
+  "password": "tech123456",
+  "job_number": "103542",
+  "role": "tech"
+}
+
+
+
+### 1. 创建一个新病例用于测试
+POST {{host}}/api/v1/cases/create
+Content-Type: application/json
+Authorization: Bearer {{remote_admin_token}}
+
+{
+  "name": "病人乙",
+  "gender": 1,
+  "age": 45,
+  "id_number": "120105198001011234",
+  "contact": "13800138000",
+  "medical_history": "咳嗽一月余",
+  "case_desc": "远程服务器连通性测试"
+}
+
+> {%
+    if (response.status === 200 && response.body.code === 0) {
+        client.global.set("remote_case_id", response.body.data.caseId);
+    }
+%}
+
+
+
+
+### 2. 在该病例下创建一个超声检查单
+POST {{host}}/api/v1/cases/9CC34B/study/create
+Content-Type: application/json
+Authorization: Bearer {{remote_admin_token}}
+
+{
+  "studys": [
+    {
+      "study_time": "2026-03-18",
+      "study_type": "XRAY",
+      "study_desc": "胸部常规X光扫描"
+    }
+  ]
+}
+
+> {%
+    if (response.status === 200 && response.body.code === 0) {
+        var studies = response.body.data.studies;
+        var newStudy = studies[studies.length - 1]; // 取出最后一个检查单
+        client.global.set("remote_study_id", newStudy.studyId);
+    }
+%}
+
+
+### 3. 上传真实可用的医疗影像到检查单
+# ⚠️ 提示: 请确保将下面 `< /Users/fireflyx/test.png` 换成你电脑里真实存在的一张照片
+POST {{host}}/api/v1/cases/9CC34B/study/STU227ED40D4A/upload_image
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+Authorization: Bearer {{remote_admin_token}}
+
+--WebAppBoundary
+Content-Disposition: form-data; name="images"; filename="server_test.png"
+Content-Type: image/png
+
+< /Users/fireflyx/test.png
+--WebAppBoundary--
+
+> {%
+    if (response.status === 200 && response.body.code === 0) {
+        client.global.set("remote_image_id", response.body.data.imageIds[0]);
+    }
+%}
+
+
+### 4. 触发 AI 影像推理
+POST {{host}}/api/v1/image/infer/IMG5C79CE65BD
+Authorization: Bearer {{remote_admin_token}}
+Content-Type: application/json
+
+{
+  "model": "1",
+  "parameter": {
+    "threshold": 0.3
+  }
+}
+
+### 5. 获取全部病例数据 (不带任何过滤)
+GET {{host}}/api/v1/cases/get
+Authorization: Bearer {{remote_admin_token}}
+
+
+### 6. 根据单个病例 ID 查询详情
+# ⚠️ 注意: 用真实拿到的 case_id 替换此处的 9162F7，或使用 {{remote_case_id}}
+GET {{host}}/api/v1/cases/get?case_id=97E918
+Authorization: Bearer {{remote_admin_token}}
+
+
+### 7. 根据时间范围筛选病例 (测试时间格式是否正确解析)
+# ⚠️ 提示: Spring Boot 中 LocalDate 默认期望的时间格式为 yyyy-MM-dd
+# 如果这里传 yyyy-MM-dd 仍然报错 400 Bad Request，可能是需要为 Controller 的入参加上 @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+GET {{host}}/api/v1/cases/get?start_date=2020-01-01&end_date=2026-12-31
+Authorization: Bearer {{remote_admin_token}}
+
+
+### 8. 科研人员接口：获取系统中全部的 AI 影像推理结果及坐标数据
+GET {{host}}/api/v1/infer_result/get
+Authorization: Bearer {{remote_admin_token}}
+
+
+### 9. 批量发起 AI 影像推理请求
+# 使用在步骤3中上传得到的图片 (remote_image_id) 进行批量处理预测
+POST {{host}}/api/v1/infer/batch
+Authorization: Bearer {{remote_admin_token}}
+Content-Type: application/json
+
+{
+  "imageIds": ["IMG5C79CE65BD"],
+  "model": "1",
+  "parameter": {
+    "threshold": 0.4
+  }
+}
+
+> {%
+    if(response.status === 200 && response.body.code === 0) {
+        client.global.set("remote_batch_id", response.body.data.batchId);
+        client.log("✅ 批量推理发起成功，Batch ID: " + response.body.data.batchId);
+    }
+%}
+
+
+### 10. 轮询查看批量推理进度
+# 使用刚刚得到的 remote_batch_id 来查询处理情况
+GET {{host}}/api/v1/infer/batch/{{remote_batch_id}}/status
+Authorization: Bearer {{remote_admin_token}}
+
+> {%
+    if(response.status === 200 && response.body.code === 0) {
+        client.log("✅ 批量进度: " + response.body.data.progress.completed + "/" + response.body.data.progress.total);
+        client.log("  总体状态: " + response.body.data.overallStatus);
+    }
+%}
+
+
+### 11. 获取此次批量推理的最终结果数据
+# 这将返回该批次所有图片诊断的类别、置信度，以及包含坐标框的 JSON 数据
+GET {{host}}/api/v1/infer/batch/{{remote_batch_id}}/result
+Authorization: Bearer {{remote_admin_token}}
+
+> {%
+    if(response.status === 200 && response.body.code === 0) {
+        var results = response.body.data;
+        if (results && results.length > 0) {
+            // 保存结果ID，用作后续医生修正靶区的测试
+            client.global.set("remote_result_id", results[0].resultId);
+            client.log("✅ 成功获取推理结果，并保存 Result ID: " + results[0].resultId);
+        }
+    }
+%}
+
+
+### 12. 测试医生介入修正 AI 靶区 (Human-in-the-loop)
+# 假设医生对刚才取得的 AI 检测框不满意，在前端拖拽框选后调用此接口进行重写
+POST {{host}}/api/v1/infer_result/{{remote_result_id}}/doc_bbox/update
+Authorization: Bearer {{remote_admin_token}}
+Content-Type: application/json
+
+{
+  "modified_label": "doctor_approved_pneumonia",
+  "doc_bbox": [
+    {
+      "box_2d": [100, 150, 400, 450],
+      "label": "Doctor Fixed"
+    }
+  ]
+}
+
+> {%
+    if(response.status === 200 && response.body.code === 0) {
+        client.log("✅ 医生修正靶区成功，数据已双写记录。");
+    }
+%}
+
+
+### 13. 获取系统操作审计日志 (Audit Logs)
+# 用于验证刚才操作的痕迹（例如上传、AI推理、修改靶区等是否被记录）
+POST {{host}}/api/v1/log/get
+Authorization: Bearer {{remote_admin_token}}
+Content-Type: application/json
+
+{
+  "page_no": 1,
+  "page_size": 20
+}
+
+> {%
+    if(response.status === 200 && response.body.code === 0) {
+        client.log("✅ 成功获取系统最新操作日志列表！");
+    }
+%}
+
+
+
+### 14. 修改本人的登录密码
+# 💡 提示: 如果你服务器里有旧号（密码还是 admin123），可以在第 0 步将密码改成 admin123 成功登录获取 Token 之后，直接跳到这一步执行，把旧密码平滑升级为合规的新密码！
+POST {{host}}/api/v1/account/change_password
+Authorization: Bearer {{remote_admin_token}}
+Content-Type: application/json
+
+{
+  "old_password": "admin123",
+  "new_password": "admin12345"
+}
+
+> {%
+    if(response.status === 200 && response.body.code === 0) {
+        client.log("✅ 密码修改成功！下次登录时请务必使用新密码。");
+    }
+%}
+
+
+### 15. 登录新创建的账号或使用新密码登录进行验证
+# 修改密码后，马上测试新的合规密码是否可用
+POST {{host}}/api/v1/account/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin12345"
+}
+
+
+### 34. 获取所有可用的 AI 模型列表
+GET {{host}}/api/v1/model/list
+Authorization: Bearer {{remote_admin_token}}
+Content-Type: application/json
+
+### 28. 获取所有图片的推理结果
+# 这里可以查看到刚才批量推理生成的 bbox, 诊断标签和置信度
+GET {{host}}/api/v1/infer_result/get
+Authorization: Bearer {{remote_admin_token}}
+Content-Type: application/json
+
+
+> {%
+    if(response.status === 200 && response.body.code === 0) {
+        client.log("✅ 成功获取AI推理结果，总计数量: " + response.body.data.length);
+    }
+%}

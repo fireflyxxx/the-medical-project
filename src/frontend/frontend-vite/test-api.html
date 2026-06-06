@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head><title>Test API</title></head>
+<body>
+<h1>Test Inference Results API</h1>
+<button onclick="testAPI()">Test API</button>
+<pre id="output"></pre>
+<script>
+async function testAPI() {
+  try {
+    const token = localStorage.getItem('token') || prompt('Enter token:');
+    const response = await fetch('http://localhost:8080/api/v1/infer_result/get', {
+      headers: { 'Authorization': token }
+    });
+    const data = await response.json();
+    document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+  } catch (e) {
+    document.getElementById('output').textContent = 'Error: ' + e.message;
+  }
+}
+</script>
+</body>
+</html>

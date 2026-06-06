@@ -1,0 +1,988 @@
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>医疗影像AI分析平台 - 科研端</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700&display=swap');
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f7f5fb;
+    }
+
+    .tech-purple {
+      color: #722ED1;
+    }
+
+    .bg-tech-purple {
+      background-color: #722ED1;
+    }
+
+    .sidebar-item:hover {
+      background: rgba(114, 46, 209, 0.08);
+      color: #722ED1;
+    }
+  </style>
+</head>
+
+<body class="flex h-screen overflow-hidden">
+  <!-- 侧边导航 -->
+  <aside class="w-64 bg-white border-r flex flex-col items-stretch">
+    <div class="h-16 flex items-center px-6 space-x-2 border-b">
+      <span class="iconify text-3xl tech-purple" data-icon="solar:atom-bold"></span>
+      <span class="text-xl font-bold tracking-tight">V-Lab AI</span>
+    </div>
+    <div class="flex-1 p-4 space-y-2 mt-4">
+      <div class="text-[10px] font-bold text-slate-400 px-2 mb-2 uppercase tracking-widest">基础工作区</div>
+      <a class="sidebar-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-600 transition-all bg-purple-50 tech-purple" href="#" onclick="showTrainingOverview(); return false;">
+        <span class="iconify text-xl" data-icon="solar:chart-2-bold"></span>
+        <span class="font-medium">可视化展示</span>
+      </a>
+      <a class="sidebar-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-600 transition-all" href="#" onclick="showDatasetSamples(); return false;">
+        <span class="iconify text-xl" data-icon="solar:clipboard-list-bold"></span>
+        <span class="font-medium">影像数据审查</span>
+      </a>
+      <a class="sidebar-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-600 transition-all" href="#">
+        <span class="iconify text-xl" data-icon="solar:database-bold"></span>
+        <span class="font-medium">数据集版本</span>
+      </a>
+      <a class="sidebar-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-600 transition-all" href="#">
+        <span class="iconify text-xl" data-icon="solar:box-bold"></span>
+        <span class="font-medium">模型库</span>
+      </a>
+      <a class="sidebar-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-600 transition-all" href="#" onclick="showModelConfig(); return false;">
+        <span class="iconify text-xl" data-icon="solar:settings-minimalistic-bold"></span>
+        <span class="font-medium">AI模型配置</span>
+      </a>
+      <div class="text-[10px] font-bold text-slate-400 px-2 mb-2 mt-6 uppercase tracking-widest">高级分析</div>
+      <a class="sidebar-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-600 transition-all" href="#">
+        <span class="iconify text-xl" data-icon="solar:scanner-bold"></span>
+        <span class="font-medium">标注一致性</span>
+      </a>
+      <a class="sidebar-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-600 transition-all" href="#">
+        <span class="iconify text-xl" data-icon="solar:notification-lines-remove-bold"></span>
+        <span class="font-medium">错误回溯</span>
+      </a>
+    </div>
+    <div class="p-4 bg-slate-50 border-t">
+      <div class="flex items-center space-x-3 mb-3 px-2">
+        <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+        <span class="text-xs text-slate-500">GPU Cluster: Active</span>
+      </div>
+      <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+        <div class="bg-tech-purple h-full w-[65%]"></div>
+      </div>
+      <p class="text-[10px] text-slate-400 mt-2 text-center">VRAM Usage: 15.6GB / 24GB</p>
+    </div>
+  </aside>
+  <!-- 主体区域 -->
+  <main class="flex-1 flex flex-col overflow-y-auto">
+    <header class="h-16 bg-white border-b flex items-center justify-between px-8 shrink-0">
+      <div class="flex items-center space-x-4">
+        <h2 class="text-lg font-bold text-slate-800">当前项目: 甲状腺结节自动勾勒模型训练 (M-202)</h2>
+        <span class="bg-purple-100 text-[#722ED1] text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-widest">Epoch 85/100</span>
+      </div>
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center -space-x-2">
+          <img alt="Researcher 1" class="w-8 h-8 rounded-full border-2 border-white" src="https://modao.cc/agent-py/media/generated_images/2026-03-12/3bb00ee27415406eb9cd70d5ccc83b46.jpg">
+          <img alt="Researcher 2" class="w-8 h-8 rounded-full border-2 border-white" src="https://modao.cc/agent-py/media/generated_images/2026-03-12/fe8a718ada304eeb9545532538a837ad.jpg">
+        </div>
+        <button class="bg-[#722ED1] hover:bg-[#591ba3] text-white px-4 py-1.5 rounded-lg text-sm font-bold shadow-lg shadow-purple-200 transition-all flex items-center">
+          <span class="iconify mr-2" data-icon="solar:play-bold"></span> 导出模型
+        </button>
+      </div>
+    </header>
+    <!-- 训练概览内容 -->
+    <div id="trainingOverview" class="p-8 space-y-8">
+      <!-- 核心指标指标 -->
+      <div class="grid grid-cols-4 gap-6">
+        <div class="bg-white p-6 rounded-2xl border border-purple-100 shadow-sm">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-1">训练损失 (Loss)</p>
+          <div class="flex items-end space-x-2">
+            <span class="text-3xl font-bold font-mono text-slate-800">0.0425</span>
+            <span class="text-green-500 text-xs font-bold pb-1 underline">↘ 1.2%</span>
+          </div>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border border-purple-100 shadow-sm">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-1">精确度 (Accuracy)</p>
+          <div class="flex items-end space-x-2">
+            <span class="text-3xl font-bold font-mono text-slate-800">97.8%</span>
+            <span class="text-green-500 text-xs font-bold pb-1">↑ 0.5%</span>
+          </div>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border border-purple-100 shadow-sm">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-1">召回率 (Recall)</p>
+          <div class="flex items-end space-x-2">
+            <span class="text-3xl font-bold font-mono text-slate-800">95.2%</span>
+            <span class="text-slate-300 text-xs font-bold pb-1">Stable</span>
+          </div>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border border-purple-100 shadow-sm">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-1">数据集大小 (Samples)</p>
+          <div class="flex items-end space-x-2">
+            <span class="text-3xl font-bold font-mono text-slate-800">12,408</span>
+            <span class="text-purple-400 text-xs font-bold pb-1 italic">Augmented</span>
+          </div>
+        </div>
+      </div>
+      <div class="grid grid-cols-12 gap-6">
+        <!-- 模型性能曲线 -->
+        <div class="col-span-8 bg-white p-6 rounded-2xl border border-purple-100 shadow-sm">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="font-bold flex items-center">
+              <span class="iconify mr-2 tech-purple" data-icon="solar:graph-bold"></span>
+              模型收敛曲线 (Loss / Val-Loss)
+            </h3>
+            <div class="flex space-x-2">
+              <button class="bg-slate-50 text-[10px] px-2 py-1 border rounded hover:bg-slate-100">Linear</button>
+              <button class="bg-purple-100 text-[#722ED1] text-[10px] px-2 py-1 border border-purple-200 rounded">Log</button>
+            </div>
+          </div>
+          <div class="h-80 w-full" id="lossChart"></div>
+        </div>
+        <!-- 样本分布与标注进度 -->
+        <div class="col-span-4 bg-white p-6 rounded-2xl border border-purple-100 shadow-sm">
+          <h3 class="font-bold mb-6 flex items-center">
+            <span class="iconify mr-2 tech-purple" data-icon="solar:pie-chart-bold"></span>
+            训练样本类别占比
+          </h3>
+          <div class="h-56" id="samplePie"></div>
+          <div class="mt-4 space-y-4">
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-slate-500">多中心交叉验证进度</span>
+              <span class="font-bold">85%</span>
+            </div>
+            <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+              <div class="bg-tech-purple h-full w-[85%]"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 样本明细反馈界面 -->
+    <div id="datasetSamples" class="p-8 space-y-6 hidden">
+      <!-- 页面标题和统计 -->
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-2xl font-bold text-slate-800 flex items-center">
+            <span class="iconify mr-3 tech-purple text-3xl" data-icon="solar:clipboard-list-bold"></span>
+            数据集样本明细 - 验证集反馈
+          </h3>
+          <p class="text-sm text-slate-500 mt-1">查看AI预测结果与医生标注的对比分析</p>
+        </div>
+        <div class="flex space-x-3">
+          <select class="text-sm border rounded-lg px-4 py-2 bg-white outline-none">
+            <option>所有中心</option>
+            <option>上海一院</option>
+            <option>北京三院</option>
+            <option>广州医院</option>
+          </select>
+          <button class="text-sm bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg transition-all">过滤低分样本</button>
+          <button class="text-sm bg-[#722ED1] hover:bg-[#591ba3] text-white px-4 py-2 rounded-lg transition-all flex items-center">
+            <span class="iconify mr-2" data-icon="solar:download-bold"></span>导出报告
+          </button>
+        </div>
+      </div>
+
+      <!-- 快速统计卡片 -->
+      <div class="grid grid-cols-5 gap-4">
+        <div class="bg-white p-4 rounded-xl border border-purple-100 shadow-sm">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-1">总样本数</p>
+          <p class="text-2xl font-bold font-mono text-slate-800">1,200</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-green-100 shadow-sm">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-1">医生同意</p>
+          <p class="text-2xl font-bold font-mono text-green-600">1,089</p>
+          <p class="text-xs text-slate-500 mt-1">90.8%</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-yellow-100 shadow-sm">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-1">需复核</p>
+          <p class="text-2xl font-bold font-mono text-yellow-600">87</p>
+          <p class="text-xs text-slate-500 mt-1">7.3%</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-red-100 shadow-sm">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-1">不同意</p>
+          <p class="text-2xl font-bold font-mono text-red-600">24</p>
+          <p class="text-xs text-slate-500 mt-1">2.0%</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-purple-100 shadow-sm">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-1">平均置信度</p>
+          <p class="text-2xl font-bold font-mono text-purple-600">0.91</p>
+        </div>
+      </div>
+
+      <!-- 数据表格 -->
+      <div class="bg-white rounded-2xl border border-purple-100 shadow-sm overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 text-slate-500 text-left font-medium border-b">
+            <tr>
+              <th class="px-6 py-4">样本编号 (DICOM)</th>
+              <th class="px-6 py-4">病灶类型</th>
+              <th class="px-6 py-4">Ground Truth</th>
+              <th class="px-6 py-4">Prediction</th>
+              <th class="px-6 py-4">Confidence</th>
+              <th class="px-6 py-4">医生评价</th>
+              <th class="px-6 py-4">操作</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <tr class="hover:bg-slate-50">
+              <td class="px-6 py-4 font-mono text-xs">IMG_SH_4492-AX</td>
+              <td class="px-6 py-4">结节 (Nodule)</td>
+              <td class="px-6 py-4"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold">BENIGN</span></td>
+              <td class="px-6 py-4 text-green-600 font-bold">Benign</td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <div class="w-16 bg-slate-100 h-1 rounded-full">
+                    <div class="bg-green-500 h-1 w-[98%]"></div>
+                  </div>
+                  <span class="text-[10px]">0.98</span>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold">同意</span>
+                  <span class="text-yellow-600 text-xs">★★★★★</span>
+                </div>
+                <p class="text-[10px] text-slate-500 mt-1">边界清晰，诊断准确</p>
+              </td>
+              <td class="px-6 py-4">
+                <button onclick="openHeatmapModal('IMG_SH_4492-AX', 'benign')" class="text-tech-purple hover:underline text-xs">可视化热力图</button>
+              </td>
+            </tr>
+            <tr class="hover:bg-slate-50">
+              <td class="px-6 py-4 font-mono text-xs">IMG_BJ_8812-SAG</td>
+              <td class="px-6 py-4">弥漫 (Diffuse)</td>
+              <td class="px-6 py-4"><span class="bg-red-100 text-red-700 px-2 py-0.5 rounded text-[10px] font-bold">MALIGNANT</span></td>
+              <td class="px-6 py-4 text-orange-600 font-bold">Suspicious</td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <div class="w-16 bg-slate-100 h-1 rounded-full">
+                    <div class="bg-orange-500 h-1 w-[62%]"></div>
+                  </div>
+                  <span class="text-[10px]">0.62</span>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <span class="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded text-[10px] font-bold">需复核</span>
+                  <span class="text-yellow-600 text-xs">★★★☆☆</span>
+                </div>
+                <p class="text-[10px] text-slate-500 mt-1">置信度偏低，建议进一步检查</p>
+              </td>
+              <td class="px-6 py-4">
+                <button onclick="openHeatmapModal('IMG_BJ_8812-SAG', 'suspicious')" class="text-tech-purple hover:underline text-xs">可视化热力图</button>
+              </td>
+            </tr>
+            <tr class="hover:bg-slate-50">
+              <td class="px-6 py-4 font-mono text-xs">IMG_SH_2101-COR</td>
+              <td class="px-6 py-4">囊肿 (Cyst)</td>
+              <td class="px-6 py-4"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold">BENIGN</span></td>
+              <td class="px-6 py-4 text-green-600 font-bold">Benign</td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <div class="w-16 bg-slate-100 h-1 rounded-full">
+                    <div class="bg-green-500 h-1 w-[99%]"></div>
+                  </div>
+                  <span class="text-[10px]">0.99</span>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold">同意</span>
+                  <span class="text-yellow-600 text-xs">★★★★☆</span>
+                </div>
+                <p class="text-[10px] text-slate-500 mt-1">典型囊肿特征</p>
+              </td>
+              <td class="px-6 py-4">
+                <button onclick="openHeatmapModal('IMG_SH_2101-COR', 'benign')" class="text-tech-purple hover:underline text-xs">可视化热力图</button>
+              </td>
+            </tr>
+            <tr class="hover:bg-slate-50">
+              <td class="px-6 py-4 font-mono text-xs">IMG_GZ_5523-AX</td>
+              <td class="px-6 py-4">结节 (Nodule)</td>
+              <td class="px-6 py-4"><span class="bg-red-100 text-red-700 px-2 py-0.5 rounded text-[10px] font-bold">MALIGNANT</span></td>
+              <td class="px-6 py-4 text-red-600 font-bold">Malignant</td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <div class="w-16 bg-slate-100 h-1 rounded-full">
+                    <div class="bg-red-500 h-1 w-[95%]"></div>
+                  </div>
+                  <span class="text-[10px]">0.95</span>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold">同意</span>
+                  <span class="text-yellow-600 text-xs">★★★★★</span>
+                </div>
+                <p class="text-[10px] text-slate-500 mt-1">恶性特征明显</p>
+              </td>
+              <td class="px-6 py-4">
+                <button onclick="openHeatmapModal('IMG_GZ_5523-AX', 'benign')" class="text-tech-purple hover:underline text-xs">可视化热力图</button>
+              </td>
+            </tr>
+            <tr class="hover:bg-slate-50">
+              <td class="px-6 py-4 font-mono text-xs">IMG_BJ_3341-SAG</td>
+              <td class="px-6 py-4">结节 (Nodule)</td>
+              <td class="px-6 py-4"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold">BENIGN</span></td>
+              <td class="px-6 py-4 text-red-600 font-bold">Malignant</td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <div class="w-16 bg-slate-100 h-1 rounded-full">
+                    <div class="bg-orange-500 h-1 w-[58%]"></div>
+                  </div>
+                  <span class="text-[10px]">0.58</span>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <span class="bg-red-100 text-red-700 px-2 py-0.5 rounded text-[10px] font-bold">不同意</span>
+                  <span class="text-yellow-600 text-xs">★★☆☆☆</span>
+                </div>
+                <p class="text-[10px] text-slate-500 mt-1">误判，需重新训练</p>
+              </td>
+              <td class="px-6 py-4">
+                <button onclick="openHeatmapModal('IMG_BJ_3341-SAG', 'suspicious')" class="text-tech-purple hover:underline text-xs">可视化热力图</button>
+              </td>
+            </tr>
+            <tr class="hover:bg-slate-50">
+              <td class="px-6 py-4 font-mono text-xs">IMG_SH_7782-COR</td>
+              <td class="px-6 py-4">囊肿 (Cyst)</td>
+              <td class="px-6 py-4"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold">BENIGN</span></td>
+              <td class="px-6 py-4 text-green-600 font-bold">Benign</td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <div class="w-16 bg-slate-100 h-1 rounded-full">
+                    <div class="bg-green-500 h-1 w-[97%]"></div>
+                  </div>
+                  <span class="text-[10px]">0.97</span>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold">同意</span>
+                  <span class="text-yellow-600 text-xs">★★★★☆</span>
+                </div>
+                <p class="text-[10px] text-slate-500 mt-1">标准囊肿表现</p>
+              </td>
+              <td class="px-6 py-4">
+                <button onclick="openHeatmapModal('IMG_SH_7782-COR', 'benign')" class="text-tech-purple hover:underline text-xs">可视化热力图</button>
+              </td>
+            </tr>
+            <tr class="hover:bg-slate-50">
+              <td class="px-6 py-4 font-mono text-xs">IMG_GZ_9012-AX</td>
+              <td class="px-6 py-4">弥漫 (Diffuse)</td>
+              <td class="px-6 py-4"><span class="bg-red-100 text-red-700 px-2 py-0.5 rounded text-[10px] font-bold">MALIGNANT</span></td>
+              <td class="px-6 py-4 text-orange-600 font-bold">Suspicious</td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <div class="w-16 bg-slate-100 h-1 rounded-full">
+                    <div class="bg-orange-500 h-1 w-[71%]"></div>
+                  </div>
+                  <span class="text-[10px]">0.71</span>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <span class="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded text-[10px] font-bold">需复核</span>
+                  <span class="text-yellow-600 text-xs">★★★☆☆</span>
+                </div>
+                <p class="text-[10px] text-slate-500 mt-1">边界模糊，需进一步分析</p>
+              </td>
+              <td class="px-6 py-4">
+                <button onclick="openHeatmapModal('IMG_GZ_9012-AX', 'suspicious')" class="text-tech-purple hover:underline text-xs">可视化热力图</button>
+              </td>
+            </tr>
+            <tr class="hover:bg-slate-50">
+              <td class="px-6 py-4 font-mono text-xs">IMG_SH_4456-SAG</td>
+              <td class="px-6 py-4">结节 (Nodule)</td>
+              <td class="px-6 py-4"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold">BENIGN</span></td>
+              <td class="px-6 py-4 text-green-600 font-bold">Benign</td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <div class="w-16 bg-slate-100 h-1 rounded-full">
+                    <div class="bg-green-500 h-1 w-[96%]"></div>
+                  </div>
+                  <span class="text-[10px]">0.96</span>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold">同意</span>
+                  <span class="text-yellow-600 text-xs">★★★★★</span>
+                </div>
+                <p class="text-[10px] text-slate-500 mt-1">诊断准确</p>
+              </td>
+              <td class="px-6 py-4">
+                <button onclick="openHeatmapModal('IMG_SH_4456-SAG', 'benign')" class="text-tech-purple hover:underline text-xs">可视化热力图</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="p-4 bg-slate-50 flex items-center justify-between">
+          <span class="text-xs text-slate-500">显示第 1-8 条，共 1,200 条验证记录</span>
+          <div class="flex space-x-2">
+            <button class="p-1 px-3 border rounded bg-white text-xs hover:bg-slate-50 disabled:opacity-50">上一页</button>
+            <button class="p-1 px-3 border rounded bg-white text-xs hover:bg-slate-50">下一页</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI模型配置界面 -->
+    <div id="modelConfig" class="p-8 space-y-8 hidden">
+      <!-- 配置区域标题 -->
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-2xl font-bold text-slate-800 flex items-center">
+            <span class="iconify mr-3 tech-purple text-3xl" data-icon="solar:settings-minimalistic-bold"></span>
+            AI模型参数配置
+          </h3>
+          <p class="text-sm text-slate-500 mt-1">调整训练超参数、优化器设置和模型架构配置</p>
+        </div>
+        <button class="bg-[#722ED1] hover:bg-[#591ba3] text-white px-5 py-2 rounded-lg text-sm font-bold shadow-lg shadow-purple-200 transition-all flex items-center">
+          <span class="iconify mr-2" data-icon="solar:diskette-bold"></span> 保存配置
+        </button>
+      </div>
+
+      <!-- 配置卡片网格 -->
+      <div class="grid grid-cols-2 gap-6">
+        <!-- 基础训练参数 -->
+        <div class="bg-white p-6 rounded-2xl border border-purple-100 shadow-sm">
+          <h4 class="font-bold text-slate-800 mb-4 flex items-center">
+            <span class="iconify mr-2 tech-purple" data-icon="solar:chart-2-bold"></span>
+            基础训练参数
+          </h4>
+          <div class="space-y-4">
+            <div>
+              <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">学习率 (Learning Rate)</label>
+              <div class="flex items-center space-x-3">
+                <input type="range" min="0.0001" max="0.01" step="0.0001" value="0.001" class="flex-1" oninput="this.nextElementSibling.value = this.value">
+                <input type="number" value="0.001" step="0.0001" class="w-24 px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono">
+              </div>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">批次大小 (Batch Size)</label>
+              <select class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                <option>8</option>
+                <option>16</option>
+                <option selected>32</option>
+                <option>64</option>
+                <option>128</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">训练轮次 (Epochs)</label>
+              <input type="number" value="100" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono">
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">验证集比例 (Validation Split)</label>
+              <div class="flex items-center space-x-3">
+                <input type="range" min="0.1" max="0.3" step="0.05" value="0.2" class="flex-1" oninput="this.nextElementSibling.textContent = (this.value * 100).toFixed(0) + '%'">
+                <span class="w-16 text-sm font-mono text-slate-700">20%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 优化器配置 -->
+        <div class="bg-white p-6 rounded-2xl border border-purple-100 shadow-sm">
+          <h4 class="font-bold text-slate-800 mb-4 flex items-center">
+            <span class="iconify mr-2 tech-purple" data-icon="solar:graph-up-bold"></span>
+            优化器配置
+          </h4>
+          <div class="space-y-4">
+            <div>
+              <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">优化器类型</label>
+              <select class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                <option selected>Adam</option>
+                <option>AdamW</option>
+                <option>SGD</option>
+                <option>RMSprop</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">动量 (Momentum)</label>
+              <div class="flex items-center space-x-3">
+                <input type="range" min="0" max="1" step="0.05" value="0.9" class="flex-1" oninput="this.nextElementSibling.value = this.value">
+                <input type="number" value="0.9" step="0.05" class="w-24 px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono">
+              </div>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">权重衰减 (Weight Decay)</label>
+              <input type="number" value="0.0001" step="0.0001" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono">
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">学习率调度器</label>
+              <select class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                <option>None</option>
+                <option selected>ReduceLROnPlateau</option>
+                <option>CosineAnnealing</option>
+                <option>StepLR</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 模型架构 -->
+        <div class="bg-white p-6 rounded-2xl border border-purple-100 shadow-sm">
+          <h4 class="font-bold text-slate-800 mb-4 flex items-center">
+            <span class="iconify mr-2 tech-purple" data-icon="solar:layers-bold"></span>
+            模型架构
+          </h4>
+          <div class="space-y-4">
+            <div>
+              <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">骨干网络 (Backbone)</label>
+              <select class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                <option>ResNet50</option>
+                <option>ResNet101</option>
+                <option selected>EfficientNet-B4</option>
+                <option>VGG16</option>
+                <option>DenseNet121</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">输入尺寸 (Input Size)</label>
+              <select class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                <option>224x224</option>
+                <option selected>256x256</option>
+                <option>512x512</option>
+                <option>1024x1024</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">Dropout率</label>
+              <div class="flex items-center space-x-3">
+                <input type="range" min="0" max="0.5" step="0.05" value="0.3" class="flex-1" oninput="this.nextElementSibling.value = this.value">
+                <input type="number" value="0.3" step="0.05" class="w-24 px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono">
+              </div>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">预训练权重</label>
+              <div class="flex items-center space-x-3">
+                <input type="checkbox" id="pretrained" checked class="w-4 h-4 text-purple-600">
+                <label for="pretrained" class="text-sm text-slate-700">使用ImageNet预训练权重</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 数据增强 -->
+        <div class="bg-white p-6 rounded-2xl border border-purple-100 shadow-sm">
+          <h4 class="font-bold text-slate-800 mb-4 flex items-center">
+            <span class="iconify mr-2 tech-purple" data-icon="solar:gallery-bold"></span>
+            数据增强策略
+          </h4>
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <label class="text-sm text-slate-700">随机水平翻转</label>
+              <input type="checkbox" checked class="w-4 h-4 text-purple-600">
+            </div>
+            <div class="flex items-center justify-between">
+              <label class="text-sm text-slate-700">随机垂直翻转</label>
+              <input type="checkbox" checked class="w-4 h-4 text-purple-600">
+            </div>
+            <div class="flex items-center justify-between">
+              <label class="text-sm text-slate-700">随机旋转 (±15°)</label>
+              <input type="checkbox" checked class="w-4 h-4 text-purple-600">
+            </div>
+            <div class="flex items-center justify-between">
+              <label class="text-sm text-slate-700">颜色抖动</label>
+              <input type="checkbox" class="w-4 h-4 text-purple-600">
+            </div>
+            <div class="flex items-center justify-between">
+              <label class="text-sm text-slate-700">高斯模糊</label>
+              <input type="checkbox" class="w-4 h-4 text-purple-600">
+            </div>
+            <div class="flex items-center justify-between">
+              <label class="text-sm text-slate-700">Cutout/Mixup</label>
+              <input type="checkbox" class="w-4 h-4 text-purple-600">
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block mt-4">增强强度</label>
+              <div class="flex items-center space-x-3">
+                <span class="text-xs text-slate-500">弱</span>
+                <input type="range" min="1" max="3" step="1" value="2" class="flex-1">
+                <span class="text-xs text-slate-500">强</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 高级配置 -->
+      <div class="bg-white p-6 rounded-2xl border border-purple-100 shadow-sm">
+        <h4 class="font-bold text-slate-800 mb-4 flex items-center">
+          <span class="iconify mr-2 tech-purple" data-icon="solar:code-bold"></span>
+          高级配置
+        </h4>
+        <div class="grid grid-cols-3 gap-6">
+          <div>
+            <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">早停轮次 (Early Stopping)</label>
+            <input type="number" value="10" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">梯度裁剪 (Gradient Clipping)</label>
+            <input type="number" value="1.0" step="0.1" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">随机种子 (Random Seed)</label>
+            <input type="number" value="42" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono">
+          </div>
+        </div>
+        <div class="mt-4 p-4 bg-purple-50 rounded-lg border border-purple-100">
+          <p class="text-xs text-slate-600 flex items-start">
+            <span class="iconify mr-2 text-purple-600 mt-0.5" data-icon="solar:info-circle-bold"></span>
+            <span>配置将在下次训练任务启动时生效。修改配置后建议先进行小规模验证实验，确认参数合理性后再进行完整训练。</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 热力图可视化弹窗 -->
+  <div id="heatmapModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" onclick="closeHeatmapModal()">
+    <div class="bg-white rounded-2xl shadow-2xl w-[90%] max-w-6xl max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+      <!-- 弹窗头部 -->
+      <div class="sticky top-0 bg-white border-b px-8 py-6 flex items-center justify-between z-10">
+        <div>
+          <h3 class="text-2xl font-bold text-slate-800 flex items-center">
+            <span class="iconify mr-3 tech-purple text-3xl" data-icon="solar:eye-bold"></span>
+            影像分析详情
+          </h3>
+          <p class="text-sm text-slate-500 mt-1">样本编号: <span id="modalSampleId" class="font-mono font-bold">IMG_SH_4492-AX</span></p>
+        </div>
+        <button onclick="closeHeatmapModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+          <span class="iconify text-3xl" data-icon="solar:close-circle-bold"></span>
+        </button>
+      </div>
+
+      <!-- 弹窗内容 -->
+      <div class="p-8 space-y-6">
+        <!-- AI分析与医生标注对比 -->
+        <div class="grid grid-cols-2 gap-6">
+          <!-- AI热力图 -->
+          <div class="bg-slate-50 p-6 rounded-2xl border border-purple-100">
+            <h4 class="font-bold text-slate-800 mb-4 flex items-center">
+              <span class="iconify mr-2 tech-purple" data-icon="solar:cpu-bolt-bold"></span>
+              AI热力图分析
+            </h4>
+            <div class="bg-white rounded-lg overflow-hidden border">
+              <img id="aiHeatmap" src="https://modao.cc/agent-py/media/generated_images/2026-03-12/heatmap_ai_sample.jpg" alt="AI Heatmap" class="w-full h-80 object-cover">
+            </div>
+            <div class="mt-4 space-y-2">
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">预测结果:</span>
+                <span id="aiPrediction" class="font-bold text-green-600">Benign</span>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">置信度:</span>
+                <span id="aiConfidence" class="font-mono font-bold text-slate-800">0.98</span>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">关注区域:</span>
+                <span class="text-slate-700">左侧结节边界</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 医生标注 -->
+          <div class="bg-slate-50 p-6 rounded-2xl border border-purple-100">
+            <h4 class="font-bold text-slate-800 mb-4 flex items-center">
+              <span class="iconify mr-2 tech-purple" data-icon="solar:user-bold"></span>
+              医生标注结果
+            </h4>
+            <div class="bg-white rounded-lg overflow-hidden border">
+              <img id="doctorAnnotation" src="https://modao.cc/agent-py/media/generated_images/2026-03-12/annotation_doctor_sample.jpg" alt="Doctor Annotation" class="w-full h-80 object-cover">
+            </div>
+            <div class="mt-4 space-y-2">
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">医生诊断:</span>
+                <span id="doctorDiagnosis" class="font-bold text-green-600">良性结节</span>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">标注医生:</span>
+                <span class="text-slate-700">李明 主任医师</span>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">标注时间:</span>
+                <span class="text-slate-700">2026-03-10 14:32</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 医生评价详情 -->
+        <div class="bg-white p-6 rounded-2xl border border-purple-100">
+          <h4 class="font-bold text-slate-800 mb-4 flex items-center">
+            <span class="iconify mr-2 tech-purple" data-icon="solar:chat-round-bold"></span>
+            医生评价与反馈
+          </h4>
+          <div class="space-y-4">
+            <div class="flex items-center space-x-4">
+              <div class="flex items-center space-x-2">
+                <span class="text-sm text-slate-600">评价结果:</span>
+                <span id="doctorFeedback" class="bg-green-100 text-green-700 px-3 py-1 rounded text-sm font-bold">同意</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="text-sm text-slate-600">评分:</span>
+                <span id="doctorRating" class="text-yellow-600 text-lg">★★★★★</span>
+              </div>
+            </div>
+            <div>
+              <p class="text-sm text-slate-600 mb-2">详细意见:</p>
+              <div id="doctorComment" class="bg-slate-50 p-4 rounded-lg text-sm text-slate-700 leading-relaxed">
+                AI模型对该样本的分析准确，热力图显示的关注区域与实际病灶位置高度吻合。结节边界清晰，形态规则，符合良性特征。建议继续保持该模型在此类病例上的应用。
+              </div>
+            </div>
+            <div class="grid grid-cols-3 gap-4 pt-4 border-t">
+              <div class="text-center">
+                <p class="text-xs text-slate-500 mb-1">诊断一致性</p>
+                <p class="text-2xl font-bold text-green-600">100%</p>
+              </div>
+              <div class="text-center">
+                <p class="text-xs text-slate-500 mb-1">标注质量</p>
+                <p class="text-2xl font-bold text-purple-600">优秀</p>
+              </div>
+              <div class="text-center">
+                <p class="text-xs text-slate-500 mb-1">复核状态</p>
+                <p class="text-2xl font-bold text-slate-600">已完成</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 技术指标对比 -->
+        <div class="bg-white p-6 rounded-2xl border border-purple-100">
+          <h4 class="font-bold text-slate-800 mb-4 flex items-center">
+            <span class="iconify mr-2 tech-purple" data-icon="solar:chart-square-bold"></span>
+            技术指标对比
+          </h4>
+          <div class="grid grid-cols-4 gap-4">
+            <div class="text-center p-4 bg-slate-50 rounded-lg">
+              <p class="text-xs text-slate-500 mb-2">IoU (交并比)</p>
+              <p class="text-xl font-bold text-slate-800">0.94</p>
+            </div>
+            <div class="text-center p-4 bg-slate-50 rounded-lg">
+              <p class="text-xs text-slate-500 mb-2">Dice系数</p>
+              <p class="text-xl font-bold text-slate-800">0.97</p>
+            </div>
+            <div class="text-center p-4 bg-slate-50 rounded-lg">
+              <p class="text-xs text-slate-500 mb-2">边界精度</p>
+              <p class="text-xl font-bold text-slate-800">96.2%</p>
+            </div>
+            <div class="text-center p-4 bg-slate-50 rounded-lg">
+              <p class="text-xs text-slate-500 mb-2">分割准确率</p>
+              <p class="text-xl font-bold text-slate-800">98.1%</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Loss Chart
+    const lossChart = echarts.init(document.getElementById('lossChart'));
+    const epochs = Array.from({
+      length: 85
+    }, (_, i) => i + 1);
+    const data1 = epochs.map(i => Math.exp(-i / 30) * 0.5 + Math.random() * 0.02);
+    const data2 = epochs.map(i => Math.exp(-i / 25) * 0.5 + 0.05 + Math.random() * 0.05);
+
+    lossChart.setOption({
+      tooltip: {
+        trigger: 'axis'
+      },
+      legend: {
+        data: ['Training Loss', 'Validation Loss']
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        containLabel: true
+      },
+      xAxis: {
+        type: 'category',
+        boundaryGap: false,
+        data: epochs,
+        axisLabel: {
+          interval: 9
+        }
+      },
+      yAxis: {
+        type: 'value'
+      },
+      series: [{
+          name: 'Training Loss',
+          type: 'line',
+          smooth: true,
+          data: data1,
+          itemStyle: {
+            color: '#722ED1'
+          },
+          areaStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                offset: 0,
+                color: 'rgba(114, 46, 209, 0.2)'
+              },
+              {
+                offset: 1,
+                color: 'rgba(114, 46, 209, 0)'
+              }
+            ])
+          }
+        },
+        {
+          name: 'Validation Loss',
+          type: 'line',
+          smooth: true,
+          data: data2,
+          itemStyle: {
+            color: '#facc15'
+          }
+        }
+      ]
+    });
+
+    // Sample Pie
+    const pieChart = echarts.init(document.getElementById('samplePie'));
+    pieChart.setOption({
+      series: [{
+        type: 'pie',
+        radius: ['50%', '80%'],
+        avoidLabelOverlap: false,
+        label: {
+          show: false
+        },
+        data: [{
+            value: 4500,
+            name: '良性结节',
+            itemStyle: {
+              color: '#722ED1'
+            }
+          },
+          {
+            value: 2100,
+            name: '恶性结节',
+            itemStyle: {
+              color: '#9254de'
+            }
+          },
+          {
+            value: 1200,
+            name: '囊肿',
+            itemStyle: {
+              color: '#d3adf7'
+            }
+          },
+          {
+            value: 800,
+            name: '其他异常',
+            itemStyle: {
+              color: '#efdbff'
+            }
+          }
+        ]
+      }]
+    });
+
+    window.addEventListener('resize', function() {
+      lossChart.resize();
+      pieChart.resize();
+    });
+
+    // 切换显示功能
+    function showModelConfig() {
+      document.getElementById('trainingOverview').classList.add('hidden');
+      document.getElementById('datasetSamples').classList.add('hidden');
+      document.getElementById('modelConfig').classList.remove('hidden');
+
+      // 更新侧边栏激活状态
+      document.querySelectorAll('.sidebar-item').forEach(item => {
+        item.classList.remove('bg-purple-50', 'tech-purple');
+      });
+      event.target.closest('.sidebar-item').classList.add('bg-purple-50', 'tech-purple');
+    }
+
+    function showTrainingOverview() {
+      document.getElementById('modelConfig').classList.add('hidden');
+      document.getElementById('datasetSamples').classList.add('hidden');
+      document.getElementById('trainingOverview').classList.remove('hidden');
+
+      // 更新侧边栏激活状态
+      document.querySelectorAll('.sidebar-item').forEach(item => {
+        item.classList.remove('bg-purple-50', 'tech-purple');
+      });
+      event.target.closest('.sidebar-item').classList.add('bg-purple-50', 'tech-purple');
+    }
+
+    function showDatasetSamples() {
+      document.getElementById('trainingOverview').classList.add('hidden');
+      document.getElementById('modelConfig').classList.add('hidden');
+      document.getElementById('datasetSamples').classList.remove('hidden');
+
+      // 更新侧边栏激活状态
+      document.querySelectorAll('.sidebar-item').forEach(item => {
+        item.classList.remove('bg-purple-50', 'tech-purple');
+      });
+      event.target.closest('.sidebar-item').classList.add('bg-purple-50', 'tech-purple');
+    }
+
+    // 热力图弹窗功能
+    function openHeatmapModal(sampleId, type) {
+      const modal = document.getElementById('heatmapModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+
+      // 更新样本编号
+      document.getElementById('modalSampleId').textContent = sampleId;
+
+      // 根据类型更新内容
+      if (type === 'benign') {
+        document.getElementById('aiPrediction').textContent = 'Benign';
+        document.getElementById('aiPrediction').className = 'font-bold text-green-600';
+        document.getElementById('aiConfidence').textContent = '0.98';
+        document.getElementById('doctorDiagnosis').textContent = '良性结节';
+        document.getElementById('doctorDiagnosis').className = 'font-bold text-green-600';
+        document.getElementById('doctorFeedback').textContent = '同意';
+        document.getElementById('doctorFeedback').className = 'bg-green-100 text-green-700 px-3 py-1 rounded text-sm font-bold';
+        document.getElementById('doctorRating').textContent = '★★★★★';
+        document.getElementById('doctorComment').textContent = 'AI模型对该样本的分析准确，热力图显示的关注区域与实际病灶位置高度吻合。结节边界清晰，形态规则，符合良性特征。建议继续保持该模型在此类病例上的应用。';
+      } else if (type === 'suspicious') {
+        document.getElementById('aiPrediction').textContent = 'Suspicious';
+        document.getElementById('aiPrediction').className = 'font-bold text-orange-600';
+        document.getElementById('aiConfidence').textContent = '0.62';
+        document.getElementById('doctorDiagnosis').textContent = '疑似恶性';
+        document.getElementById('doctorDiagnosis').className = 'font-bold text-orange-600';
+        document.getElementById('doctorFeedback').textContent = '需复核';
+        document.getElementById('doctorFeedback').className = 'bg-yellow-100 text-yellow-700 px-3 py-1 rounded text-sm font-bold';
+        document.getElementById('doctorRating').textContent = '★★★☆☆';
+        document.getElementById('doctorComment').textContent = 'AI模型置信度较低，建议结合患者病史和其他影像学检查综合判断。病灶边界不够清晰，需要进一步的病理学检查确认诊断。建议优化模型对此类弥漫性病变的识别能力。';
+      }
+
+      // 禁止body滚动
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeHeatmapModal() {
+      const modal = document.getElementById('heatmapModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+
+      // 恢复body滚动
+      document.body.style.overflow = 'auto';
+    }
+  </script>
+
+</body>
+
+</html>

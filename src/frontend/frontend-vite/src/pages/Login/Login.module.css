@@ -1,0 +1,151 @@
+.gradientBg {
+  background: linear-gradient(135deg, #D8E3E7 0%, #C5D5DB 50%, #B8CDD5 100%);
+  position: relative;
+}
+
+.glassEffect {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.inputFocus::-ms-reveal,
+.inputFocus::-ms-clear {
+  display: none;
+}
+
+.inputFocus::-webkit-credentials-auto-fill-button {
+  display: none;
+}
+
+.inputFocus:focus {
+  border-color: #8FA5B8;
+  box-shadow: 0 0 0 3px rgba(143, 165, 184, 0.15), inset 0 1px 3px rgba(143, 165, 184, 0.1);
+  outline: none;
+  animation: breathe 2s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(143, 165, 184, 0.15), inset 0 1px 3px rgba(143, 165, 184, 0.1); }
+  50% { box-shadow: 0 0 0 3px rgba(143, 165, 184, 0.25), inset 0 1px 3px rgba(143, 165, 184, 0.15); }
+}
+
+.floatingShape {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.08;
+  animation: float 25s infinite ease-in-out;
+  filter: blur(40px);
+  z-index: 0;
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(50px, -40px) scale(1.1); }
+  66% { transform: translate(-30px, 30px) scale(0.9); }
+}
+
+.shape1 {
+  width: 400px;
+  height: 400px;
+  background: #8FA5B8;
+  top: -150px;
+  right: -100px;
+  animation-delay: 0s;
+}
+
+.shape2 {
+  width: 350px;
+  height: 350px;
+  background: #7B9EA8;
+  bottom: -100px;
+  left: -80px;
+  animation-delay: 8s;
+}
+
+.shape3 {
+  width: 250px;
+  height: 250px;
+  background: #A8C5D1;
+  top: 40%;
+  left: 15%;
+  animation-delay: 15s;
+}
+
+.roleBtn {
+  transition: all 0.3s ease;
+  border: 2px solid #C5D5DB;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.roleBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.8);
+  border-color: #8FA5B8;
+}
+
+.roleBtnSelected {
+  border-color: #8FA5B8;
+  border-width: 2.5px;
+  background: linear-gradient(135deg, rgba(143, 165, 184, 0.2) 0%, rgba(123, 158, 168, 0.15) 100%);
+  box-shadow: 0 4px 12px rgba(143, 165, 184, 0.2);
+}
+
+.roleBtnSelected .roleIcon {
+  background: #8FA5B8;
+  color: white !important;
+  padding: 8px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.roleBtn .roleText {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #4A4A48;
+}
+
+.roleBtnSelected .roleText {
+  font-weight: 700;
+  color: #8FA5B8;
+}
+
+.loginBtn {
+  background: linear-gradient(135deg, #8FA5B8 0%, #7B9EA8 100%);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.loginBtn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.loginBtn:hover::before {
+  left: 100%;
+}
+
+.loginBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(143, 165, 184, 0.4);
+}
+
+.loginBtn:active {
+  transform: translateY(0);
+}
+
+.loginBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}

@@ -1,0 +1,1117 @@
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>医疗影像AI分析平台 - 医生端</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700&display=swap');
+
+    :root {
+      --primary-blue: #4A90E2;
+      --primary-blue-dark: #3a7bc8;
+      --primary-blue-light: #6ba3e8;
+      --success-green: #52C41A;
+      --warning-orange: #FA8C16;
+      --error-red: #F5222D;
+      --info-blue: #1890FF;
+      --bg-primary: #f7f5fb;
+      --bg-secondary: #ffffff;
+      --text-primary: #262626;
+      --text-secondary: #595959;
+      --text-tertiary: #8C8C8C;
+      --border-color: #E8E8E8;
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+      --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+      --transition-fast: 0.15s ease;
+      --transition-normal: 0.3s ease;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-primary);
+    }
+
+    .tech-blue {
+      color: var(--primary-blue);
+    }
+
+    .bg-tech-blue {
+      background-color: var(--primary-blue);
+    }
+
+    /* 侧边栏样式增强 */
+    .sidebar-item {
+      transition: all var(--transition-normal);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .sidebar-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 3px;
+      background: var(--primary-blue);
+      transform: scaleY(0);
+      transition: transform var(--transition-normal);
+    }
+
+    .sidebar-item:hover {
+      background: rgba(74, 144, 226, 0.08);
+      color: var(--primary-blue);
+      transform: translateX(2px);
+    }
+
+    .sidebar-item:hover::before {
+      transform: scaleY(1);
+    }
+
+    .sidebar-item.active::before {
+      transform: scaleY(1);
+    }
+
+    /* 患者卡片增强 */
+    .patient-card {
+      transition: all var(--transition-normal);
+      position: relative;
+    }
+
+    .patient-card:hover {
+      transform: translateX(6px);
+      box-shadow: var(--shadow-md);
+    }
+
+    /* 统计卡片增强 */
+    .stat-card {
+      transition: all var(--transition-normal);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary-blue), var(--primary-blue-light));
+      opacity: 0;
+      transition: opacity var(--transition-normal);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .stat-card:hover::before {
+      opacity: 1;
+    }
+
+    /* 按钮增强 */
+    .btn-primary {
+      transition: all var(--transition-fast);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+
+    .btn-primary:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+
+    /* 图像容器增强 */
+    .image-viewer {
+      transition: all var(--transition-normal);
+    }
+
+    .image-viewer:hover {
+      box-shadow: 0 0 30px rgba(74, 144, 226, 0.3);
+    }
+
+    /* 加载动画 */
+    @keyframes pulse-glow {
+      0%, 100% {
+        box-shadow: 0 0 5px rgba(74, 144, 226, 0.5);
+      }
+      50% {
+        box-shadow: 0 0 20px rgba(74, 144, 226, 0.8);
+      }
+    }
+
+    .pulse-glow {
+      animation: pulse-glow 2s ease-in-out infinite;
+    }
+
+    /* 上传区域样式 */
+    .upload-zone {
+      transition: all var(--transition-normal);
+      border: 2px dashed var(--border-color);
+    }
+
+    .upload-zone:hover {
+      border-color: var(--primary-blue);
+      background: rgba(74, 144, 226, 0.05);
+    }
+
+    .upload-zone.drag-over {
+      border-color: var(--primary-blue);
+      background: rgba(74, 144, 226, 0.1);
+      transform: scale(1.02);
+    }
+
+    /* 模态框样式 */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      max-width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* 检测框编辑工具 */
+    .annotation-box {
+      position: absolute;
+      border: 2px solid;
+      cursor: move;
+      transition: all var(--transition-fast);
+    }
+
+    .annotation-box:hover {
+      box-shadow: 0 0 15px currentColor;
+    }
+
+    .annotation-box.selected {
+      border-width: 3px;
+    }
+
+    .resize-handle {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: white;
+      border: 2px solid currentColor;
+      border-radius: 50%;
+    }
+
+    .resize-handle.nw { top: -4px; left: -4px; cursor: nw-resize; }
+    .resize-handle.ne { top: -4px; right: -4px; cursor: ne-resize; }
+    .resize-handle.sw { bottom: -4px; left: -4px; cursor: sw-resize; }
+    .resize-handle.se { bottom: -4px; right: -4px; cursor: se-resize; }
+
+    /* 评分系统 */
+    .rating-star {
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .rating-star:hover {
+      transform: scale(1.2);
+    }
+
+    .rating-star.active {
+      color: #fbbf24;
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 1200px) {
+      .stat-card {
+        min-width: 200px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      aside {
+        position: fixed;
+        left: -100%;
+        transition: left var(--transition-normal);
+        z-index: 1000;
+      }
+
+      aside.mobile-open {
+        left: 0;
+      }
+
+      .grid-cols-4 {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .grid-cols-12 {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body class="flex h-screen overflow-hidden">
+  <!-- 侧边导航 -->
+  <aside class="w-64 bg-white border-r flex flex-col items-stretch shadow-sm">
+    <div class="h-16 flex items-center px-6 space-x-2 border-b bg-gradient-to-r from-blue-50 to-white">
+      <span class="iconify text-3xl tech-blue" data-icon="solar:health-bold"></span>
+      <span class="text-xl font-bold tracking-tight">UltraScan AI</span>
+    </div>
+    <div class="flex-1 p-4 space-y-2 mt-4">
+      <div class="text-[10px] font-bold text-slate-400 px-2 mb-2 uppercase tracking-widest">诊断工作区</div>
+      <a class="sidebar-item active flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-600 transition-all bg-blue-50 tech-blue" href="#">
+        <span class="iconify text-xl" data-icon="solar:clipboard-bold"></span>
+        <span class="font-medium">诊断工作台</span>
+      </a>
+      <a class="sidebar-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-600 transition-all" href="#">
+        <span class="iconify text-xl" data-icon="solar:folder-bold"></span>
+        <span class="font-medium">病例管理</span>
+      </a>
+      <div class="text-[10px] font-bold text-slate-400 px-2 mb-2 mt-6 uppercase tracking-widest">数据统计</div>
+      <a class="sidebar-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-600 transition-all" href="#">
+        <span class="iconify text-xl" data-icon="solar:chart-2-bold"></span>
+        <span class="font-medium">统计报表</span>
+      </a>
+    </div>
+    <div class="p-4 bg-gradient-to-br from-slate-50 to-blue-50/30 border-t">
+      <div class="flex items-center space-x-3 mb-3 px-2">
+        <img alt="Doctor profile" class="w-10 h-10 rounded-full border-2 border-[#4A90E2] shadow-sm" src="https://modao.cc/agent-py/media/generated_images/2026-03-12/0f81754d5f604e319cd2e96b87479194.jpg">
+        <div>
+          <p class="text-sm font-bold text-slate-700">王志远 主任</p>
+          <p class="text-xs text-[#4A90E2]">超声科 (A区)</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-3 px-2">
+        <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-sm"></div>
+        <span class="text-xs text-slate-500">在线 | 今日: 42例</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 主体区域 -->
+  <main class="flex-1 flex flex-col overflow-y-auto">
+    <header class="h-16 bg-white border-b flex items-center justify-between px-8 shrink-0 shadow-sm">
+      <div class="flex items-center space-x-4">
+        <h2 class="text-lg font-bold text-slate-800">诊断工作台</h2>
+        <span class="bg-blue-100 text-[#4A90E2] text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-widest shadow-sm">待处理: 15例</span>
+      </div>
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center bg-slate-100 rounded-full px-4 py-1.5 space-x-2 hover:bg-slate-200 transition-all">
+          <span class="iconify text-slate-400" data-icon="lucide:search"></span>
+          <input class="bg-transparent border-none outline-none text-xs w-48" placeholder="搜索病人 ID 或姓名" type="text">
+        </div>
+        <button onclick="openUploadModal()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center space-x-2 shadow-md hover:shadow-lg">
+          <span class="iconify" data-icon="solar:upload-bold"></span>
+          <span>上传影像</span>
+        </button>
+        <div class="relative cursor-pointer hover:scale-110 transition-all">
+          <span class="iconify text-2xl text-slate-400 hover:text-blue-500 transition-colors" data-icon="solar:bell-bing-bold-duotone"></span>
+          <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center animate-pulse">3</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="p-8 space-y-8">
+      <!-- 统计概览卡片 -->
+      <div class="grid grid-cols-4 gap-6">
+        <div class="stat-card bg-white p-6 rounded-2xl border border-blue-100 shadow-sm">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-1">今日接诊量</p>
+          <div class="flex items-end space-x-2">
+            <span class="text-3xl font-bold font-mono text-slate-800">42</span>
+            <span class="text-green-500 text-xs font-bold pb-1">↑ 12%</span>
+          </div>
+        </div>
+        <div class="stat-card bg-white p-6 rounded-2xl border border-blue-100 shadow-sm">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-1">待分析病例</p>
+          <div class="flex items-end space-x-2">
+            <span class="text-3xl font-bold font-mono text-slate-800">15</span>
+            <span class="text-slate-400 text-xs pb-1">平均12min</span>
+          </div>
+        </div>
+        <div class="stat-card bg-white p-6 rounded-2xl border border-blue-100 shadow-sm">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-1">高风险预警</p>
+          <div class="flex items-end space-x-2">
+            <span class="text-3xl font-bold font-mono text-slate-800">03</span>
+            <span class="text-red-600 text-xs font-bold pb-1 animate-pulse">需立即干预</span>
+          </div>
+        </div>
+        <div class="stat-card bg-white p-6 rounded-2xl border border-blue-100 shadow-sm">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-1">已出报告</p>
+          <div class="flex items-end space-x-2">
+            <span class="text-3xl font-bold font-mono text-slate-800">24</span>
+            <span class="text-slate-400 text-xs pb-1">召回率99.2%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-12 gap-6">
+        <!-- 患者队列 -->
+        <div class="col-span-4 bg-white rounded-2xl border border-blue-100 shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col" style="height: 650px;">
+          <div class="p-5 border-b bg-gradient-to-r from-slate-50 to-blue-50/30">
+            <h3 class="font-bold text-slate-800 flex items-center">
+              <span class="iconify mr-2 tech-blue" data-icon="solar:list-bold"></span>
+              患者列表
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">最后更新: 14:30 | 共15例</p>
+          </div>
+          <div class="flex-1 overflow-y-auto">
+            <!-- 已分析完成区域 -->
+            <div class="bg-green-50/30 px-3 py-2 border-b">
+              <p class="text-[10px] font-bold text-green-700 uppercase tracking-widest">已分析完成 (5)</p>
+            </div>
+
+            <!-- 高风险病例 - 已分析 -->
+            <div class="patient-card p-4 border-b hover:bg-red-50 cursor-pointer border-l-4 border-red-500 transition-all bg-white" onclick="loadPatientReport('202603120008')">
+              <div class="flex justify-between items-start mb-2">
+                <span class="text-sm font-bold text-slate-800">李*国 (65岁 男)</span>
+                <span class="text-[10px] px-2 py-0.5 rounded bg-red-100 text-red-600 font-bold uppercase shadow-sm">High Risk</span>
+              </div>
+              <p class="text-xs text-slate-500 mb-2 font-mono">ID: 202603120008 | 腹部超声</p>
+              <div class="flex items-center justify-between text-[10px] text-slate-400">
+                <div class="flex items-center space-x-3">
+                  <span class="flex items-center"><span class="iconify mr-1" data-icon="solar:calendar-bold"></span>2026-03-12</span>
+                  <span class="flex items-center"><span class="iconify mr-1" data-icon="solar:history-bold"></span>10:15</span>
+                </div>
+                <span class="text-green-600 font-bold flex items-center">
+                  <span class="iconify mr-1" data-icon="solar:check-circle-bold"></span>已完成
+                </span>
+              </div>
+            </div>
+
+            <!-- 中风险病例 - 已分析 -->
+            <div class="patient-card p-4 border-b hover:bg-orange-50 cursor-pointer border-l-4 border-orange-400 transition-all bg-white" onclick="loadPatientReport('202603120015')">
+              <div class="flex justify-between items-start mb-2">
+                <span class="text-sm font-bold text-slate-800">张*梅 (42岁 女)</span>
+                <span class="text-[10px] px-2 py-0.5 rounded bg-orange-100 text-orange-600 font-bold uppercase shadow-sm">Moderate</span>
+              </div>
+              <p class="text-xs text-slate-500 mb-2 font-mono">ID: 202603120015 | 甲状腺超声</p>
+              <div class="flex items-center justify-between text-[10px] text-slate-400">
+                <div class="flex items-center space-x-3">
+                  <span class="flex items-center"><span class="iconify mr-1" data-icon="solar:calendar-bold"></span>2026-03-12</span>
+                  <span class="flex items-center"><span class="iconify mr-1" data-icon="solar:history-bold"></span>10:30</span>
+                </div>
+                <span class="text-green-600 font-bold flex items-center">
+                  <span class="iconify mr-1" data-icon="solar:check-circle-bold"></span>已完成
+                </span>
+              </div>
+            </div>
+
+            <!-- 低风险病例 - 已分析 -->
+            <div class="patient-card p-4 border-b hover:bg-green-50 cursor-pointer border-l-4 border-green-400 transition-all bg-white" onclick="loadPatientReport('202603120022')">
+              <div class="flex justify-between items-start mb-2">
+                <span class="text-sm font-bold text-slate-800">周*建 (51岁 男)</span>
+                <span class="text-[10px] px-2 py-0.5 rounded bg-green-100 text-green-600 font-bold uppercase shadow-sm">Low Risk</span>
+              </div>
+              <p class="text-xs text-slate-500 mb-2 font-mono">ID: 202603120022 | 心脏彩超</p>
+              <div class="flex items-center justify-between text-[10px] text-slate-400">
+                <div class="flex items-center space-x-3">
+                  <span class="flex items-center"><span class="iconify mr-1" data-icon="solar:calendar-bold"></span>2026-03-12</span>
+                  <span class="flex items-center"><span class="iconify mr-1" data-icon="solar:history-bold"></span>11:05</span>
+                </div>
+                <span class="text-green-600 font-bold flex items-center">
+                  <span class="iconify mr-1" data-icon="solar:check-circle-bold"></span>已完成
+                </span>
+              </div>
+            </div>
+
+            <div class="patient-card p-4 border-b hover:bg-green-50 cursor-pointer border-l-4 border-green-400 transition-all bg-white" onclick="loadPatientReport('202603120028')">
+              <div class="flex justify-between items-start mb-2">
+                <span class="text-sm font-bold text-slate-800">赵*丽 (38岁 女)</span>
+                <span class="text-[10px] px-2 py-0.5 rounded bg-green-100 text-green-600 font-bold uppercase shadow-sm">Low Risk</span>
+              </div>
+              <p class="text-xs text-slate-500 mb-2 font-mono">ID: 202603120028 | 乳腺超声</p>
+              <div class="flex items-center justify-between text-[10px] text-slate-400">
+                <div class="flex items-center space-x-3">
+                  <span class="flex items-center"><span class="iconify mr-1" data-icon="solar:calendar-bold"></span>2026-03-12</span>
+                  <span class="flex items-center"><span class="iconify mr-1" data-icon="solar:history-bold"></span>11:20</span>
+                </div>
+                <span class="text-green-600 font-bold flex items-center">
+                  <span class="iconify mr-1" data-icon="solar:check-circle-bold"></span>已完成
+                </span>
+              </div>
+            </div>
+
+            <div class="patient-card p-4 border-b hover:bg-blue-50 cursor-pointer border-l-4 border-blue-400 transition-all bg-white" onclick="loadPatientReport('202603120035')">
+              <div class="flex justify-between items-start mb-2">
+                <span class="text-sm font-bold text-slate-800">孙*华 (29岁 女)</span>
+                <span class="text-[10px] px-2 py-0.5 rounded bg-blue-100 text-blue-600 font-bold uppercase shadow-sm">Routine</span>
+              </div>
+              <p class="text-xs text-slate-500 mb-2 font-mono">ID: 202603120035 | 产前检查</p>
+              <div class="flex items-center justify-between text-[10px] text-slate-400">
+                <div class="flex items-center space-x-3">
+                  <span class="flex items-center"><span class="iconify mr-1" data-icon="solar:calendar-bold"></span>2026-03-12</span>
+                  <span class="flex items-center"><span class="iconify mr-1" data-icon="solar:history-bold"></span>11:45</span>
+                </div>
+                <span class="text-green-600 font-bold flex items-center">
+                  <span class="iconify mr-1" data-icon="solar:check-circle-bold"></span>已完成
+                </span>
+              </div>
+            </div>
+
+            <!-- 待处理区域 -->
+            <div class="bg-slate-100 px-3 py-2 border-b mt-2">
+              <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">待处理 (10)</p>
+            </div>
+
+            <!-- 待处理病例 - 不可点击 -->
+            <div class="p-4 border-b border-l-4 border-slate-300 transition-all bg-slate-50 opacity-60 cursor-not-allowed">
+              <div class="flex justify-between items-start mb-2">
+                <span class="text-sm font-bold text-slate-500">王*强 (55岁 男)</span>
+                <span class="text-[10px] px-2 py-0.5 rounded bg-slate-200 text-slate-500 font-bold uppercase">待分析</span>
+              </div>
+              <p class="text-xs text-slate-400 mb-2 font-mono">ID: 202603120042 | 肝脏超声</p>
+              <div class="flex items-center justify-between text-[10px] text-slate-400">
+                <div class="flex items-center space-x-3">
+                  <span class="flex items-center"><span class="iconify mr-1" data-icon="solar:calendar-bold"></span>2026-03-12</span>
+                  <span class="flex items-center"><span class="iconify mr-1" data-icon="solar:history-bold"></span>12:10</span>
+                </div>
+                <span class="text-slate-400 flex items-center">
+                  <span class="iconify mr-1 animate-spin" data-icon="solar:refresh-bold"></span>排队中
+                </span>
+              </div>
+            </div>
+
+            <div class="p-4 border-b border-l-4 border-slate-300 transition-all bg-slate-50 opacity-60 cursor-not-allowed">
+              <div class="flex justify-between items-start mb-2">
+                <span class="text-sm font-bold text-slate-500">刘*芳 (48岁 女)</span>
+                <span class="text-[10px] px-2 py-0.5 rounded bg-slate-200 text-slate-500 font-bold uppercase">待分析</span>
+              </div>
+              <p class="text-xs text-slate-400 mb-2 font-mono">ID: 202603120048 | 甲状腺超声</p>
+              <div class="flex items-center justify-between text-[10px] text-slate-400">
+                <div class="flex items-center space-x-3">
+                  <span class="flex items-center"><span class="iconify mr-1" data-icon="solar:calendar-bold"></span>2026-03-12</span>
+                  <span class="flex items-center"><span class="iconify mr-1" data-icon="solar:history-bold"></span>12:25</span>
+                </div>
+                <span class="text-slate-400 flex items-center">
+                  <span class="iconify mr-1 animate-spin" data-icon="solar:refresh-bold"></span>排队中
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI分析主视窗 -->
+        <div class="col-span-8 space-y-6">
+          <!-- AI诊断分析卡片 -->
+          <div class="bg-white rounded-2xl border border-blue-100 shadow-sm hover:shadow-md transition-all p-6">
+            <div class="flex justify-between items-center mb-6">
+              <div>
+                <h3 class="text-lg font-bold text-slate-800 flex items-center">
+                  <span class="iconify mr-2 tech-blue text-2xl" data-icon="solar:cpu-bolt-bold"></span>
+                  AI 辅助诊断：李*国 (ID: 0008)
+                </h3>
+                <p class="text-xs text-slate-400 mt-1">序列号: US_AB_98452 | 算法模型: UltraGland V3.0.1</p>
+              </div>
+              <div class="flex space-x-2">
+                <button class="bg-slate-100 text-slate-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-200 transition-all hover:shadow-md">
+                  <span class="iconify mr-1" data-icon="solar:refresh-bold"></span>
+                  重测
+                </button>
+                <button onclick="openFeedbackModal()" class="bg-amber-100 text-amber-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-amber-200 transition-all hover:shadow-md">
+                  <span class="iconify mr-1" data-icon="solar:star-bold"></span>
+                  评价
+                </button>
+                <button onclick="exportReport()" class="bg-green-100 text-green-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-200 transition-all hover:shadow-md">
+                  <span class="iconify mr-1" data-icon="solar:download-bold"></span>
+                  导出
+                </button>
+                <button class="btn-primary bg-[#4A90E2] hover:bg-[#3a7bc8] text-white px-5 py-2 rounded-lg text-sm font-bold shadow-lg shadow-blue-200 transition-all flex items-center hover:shadow-xl">
+                  <span class="iconify mr-2" data-icon="solar:document-add-bold"></span>
+                  采用并生成报告
+                </button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-6">
+              <!-- 影像展示区 -->
+              <div class="space-y-4">
+                <div class="image-viewer relative bg-black rounded-xl overflow-hidden border-2 border-red-400" style="aspect-ratio: 16/9;">
+                  <img alt="Ultrasound scan" class="w-full h-full object-cover opacity-80" src="https://modao.cc/agent-py/media/generated_images/2026-03-12/a80216b725af422991f2763676e390fe.jpg">
+                  <div class="absolute inset-0 bg-gradient-to-tr from-transparent to-red-500/10 pointer-events-none"></div>
+
+                  <!-- AI标注框 -->
+                  <div class="absolute border-2 border-red-500 rounded-sm shadow-[0_0_15px_rgba(239,68,68,0.5)] pulse-glow" style="width: 130px; height: 95px; top: 50%; left: 33%;">
+                    <span class="absolute -top-6 left-0 bg-red-500 text-white text-[10px] px-2 py-0.5 rounded font-bold whitespace-nowrap">病灶01: 94.2% Malignant</span>
+                  </div>
+
+                  <!-- 工具栏 -->
+                  <div class="absolute bottom-4 left-4 flex space-x-2">
+                    <button class="bg-black/50 hover:bg-black/80 p-2 rounded backdrop-blur-md text-white transition-all hover:scale-110" title="放大">
+                      <span class="iconify" data-icon="solar:magnifer-zoom-in-bold"></span>
+                    </button>
+                    <button class="bg-black/50 hover:bg-black/80 p-2 rounded backdrop-blur-md text-white transition-all hover:scale-110" title="测量">
+                      <span class="iconify" data-icon="solar:ruler-bold"></span>
+                    </button>
+                    <button onclick="openAnnotationEditor()" class="bg-black/50 hover:bg-black/80 p-2 rounded backdrop-blur-md text-white transition-all hover:scale-110" title="编辑标注">
+                      <span class="iconify" data-icon="solar:pen-bold"></span>
+                    </button>
+                    <button class="bg-black/50 hover:bg-black/80 p-2 rounded backdrop-blur-md text-white transition-all hover:scale-110" title="对比">
+                      <span class="iconify" data-icon="solar:chart-square-bold"></span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- 缩略图 -->
+                <div class="grid grid-cols-4 gap-2">
+                  <img alt="Thumbnail 1" class="rounded-lg border-2 border-[#4A90E2] cursor-pointer hover:opacity-80 transition-all hover:scale-105" src="https://modao.cc/agent-py/media/generated_images/2026-03-12/e859f627daef4f128898db01905b5f9e.jpg">
+                  <img alt="Thumbnail 2" class="rounded-lg border border-slate-200 cursor-pointer hover:border-blue-300 transition-all hover:scale-105" src="https://modao.cc/agent-py/media/generated_images/2026-03-12/d0f2e52969fe4c30bda76b6df68facc8.jpg">
+                  <img alt="Thumbnail 3" class="rounded-lg border border-slate-200 cursor-pointer opacity-50 hover:opacity-100 transition-all hover:scale-105" src="https://modao.cc/agent-py/media/generated_images/2026-03-12/7321b09865aa4f989af1599bedbc639c.jpg">
+                  <div class="rounded-lg border-2 border-dashed border-slate-200 flex items-center justify-center cursor-pointer text-slate-300 hover:border-blue-300 hover:text-blue-400 transition-all hover:scale-105">
+                    <span class="iconify text-xl" data-icon="solar:add-circle-bold"></span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- AI分析指标 -->
+              <div class="bg-gradient-to-br from-slate-50 to-blue-50/30 rounded-xl p-5 space-y-4 border border-blue-100/50">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-bold text-slate-700">结节自动分析</span>
+                  <span class="text-xs tech-blue font-bold bg-blue-50 px-3 py-1 rounded-full border border-blue-200">TI-RADS 4c</span>
+                </div>
+
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between text-xs">
+                    <span class="text-slate-500">结节大小 (Size)</span>
+                    <span class="font-bold font-mono text-slate-700">12.8×9.4×15.2mm</span>
+                  </div>
+
+                  <div class="pt-3 border-t border-slate-200">
+                    <div class="flex items-center justify-between text-xs mb-2">
+                      <span class="text-slate-500">恶性概率</span>
+                      <span class="font-bold text-red-600">94.2%</span>
+                    </div>
+                    <div class="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
+                      <div class="bg-gradient-to-r from-red-500 to-red-600 h-2.5 rounded-full transition-all shadow-sm" style="width: 94.2%"></div>
+                    </div>
+                  </div>
+
+                  <div class="pt-3 border-t border-slate-200 space-y-2">
+                    <div class="flex items-center justify-between text-xs">
+                      <span class="text-slate-500">边界清晰度</span>
+                      <span class="font-bold text-slate-700">不规则 (Irregular)</span>
+                    </div>
+                    <div class="flex items-center justify-between text-xs">
+                      <span class="text-slate-500">回声特征</span>
+                      <span class="font-bold text-slate-700">极低回声</span>
+                    </div>
+                    <div class="flex items-center justify-between text-xs">
+                      <span class="text-slate-500">微钙化</span>
+                      <span class="font-bold text-red-500 flex items-center">
+                        <span class="iconify mr-1" data-icon="solar:danger-triangle-bold"></span>
+                        存在点状钙化
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-200">
+                  <p class="text-xs font-bold text-slate-700 mb-2 flex items-center">
+                    <span class="iconify mr-1 tech-blue" data-icon="solar:magic-stick-bold"></span>
+                    AI 智能描述建议
+                  </p>
+                  <textarea id="aiDescription" class="w-full bg-white border border-blue-100 rounded-lg p-3 text-xs text-slate-600 leading-relaxed shadow-sm focus:outline-none focus:border-blue-400 transition-all resize-none" rows="4">超声可见右侧叶中部一低回声结节，形态不规则，垂直生长（纵横比>1），边缘可见成分分层，内见散在点状强回声，提示高度恶性风险，建议结合穿刺活检...</textarea>
+                  <p class="text-[10px] text-slate-400 mt-1">医生可直接编辑修改 AI 生成的描述</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 上传影像模态框 -->
+  <div id="uploadModal" class="modal">
+    <div class="modal-content w-full max-w-2xl p-8">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-bold text-slate-800 flex items-center">
+          <span class="iconify mr-2 tech-blue text-2xl" data-icon="solar:upload-bold"></span>
+          上传影像数据
+        </h3>
+        <button onclick="closeUploadModal()" class="text-slate-400 hover:text-slate-600 transition-all">
+          <span class="iconify text-2xl" data-icon="solar:close-circle-bold"></span>
+        </button>
+      </div>
+
+      <!-- 上传区域 -->
+      <div id="uploadZone" class="upload-zone rounded-xl p-12 text-center mb-6">
+        <span class="iconify text-6xl text-slate-300 mb-4" data-icon="solar:cloud-upload-bold"></span>
+        <p class="text-slate-600 font-medium mb-2">拖拽文件到此处或点击上传</p>
+        <p class="text-xs text-slate-400 mb-4">支持格式: DCM, PNG, JPG (最大 50MB)</p>
+        <input type="file" id="fileInput" accept=".dcm,.png,.jpg,.jpeg" multiple class="hidden">
+        <button onclick="document.getElementById('fileInput').click()" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-medium transition-all">
+          选择文件
+        </button>
+      </div>
+
+      <!-- 文件列表 -->
+      <div id="fileList" class="space-y-2 mb-6 max-h-48 overflow-y-auto"></div>
+
+      <!-- 任务配置 -->
+      <div class="bg-slate-50 rounded-xl p-4 mb-6">
+        <h4 class="text-sm font-bold text-slate-700 mb-3">推理任务配置</h4>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-xs text-slate-500 mb-1 block">算法模型</label>
+            <select class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-400 transition-all">
+              <option>UltraGland V3.0.1 (推荐)</option>
+              <option>UltraGland V2.8.5</option>
+              <option>DeepScan Pro V1.2</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 mb-1 block">检测灵敏度</label>
+            <select class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-400 transition-all">
+              <option>标准</option>
+              <option>高灵敏度</option>
+              <option>高特异性</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- 操作按钮 -->
+      <div class="flex justify-end space-x-3">
+        <button onclick="closeUploadModal()" class="px-6 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-all">
+          取消
+        </button>
+        <button onclick="startInference()" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-bold transition-all shadow-lg">
+          开始分析
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 标注编辑器模态框 -->
+  <div id="annotationModal" class="modal">
+    <div class="modal-content w-full max-w-5xl p-8">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-bold text-slate-800 flex items-center">
+          <span class="iconify mr-2 tech-blue text-2xl" data-icon="solar:pen-bold"></span>
+          编辑检测标注
+        </h3>
+        <button onclick="closeAnnotationEditor()" class="text-slate-400 hover:text-slate-600 transition-all">
+          <span class="iconify text-2xl" data-icon="solar:close-circle-bold"></span>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-3 gap-6">
+        <!-- 编辑区域 -->
+        <div class="col-span-2">
+          <div class="relative bg-black rounded-xl overflow-hidden" style="aspect-ratio: 16/9;">
+            <img id="annotationImage" alt="Editing image" class="w-full h-full object-cover opacity-80" src="https://modao.cc/agent-py/media/generated_images/2026-03-12/a80216b725af422991f2763676e390fe.jpg">
+            <div id="annotationCanvas" class="absolute inset-0"></div>
+          </div>
+
+          <!-- 编辑工具栏 -->
+          <div class="flex items-center justify-between mt-4 p-3 bg-slate-50 rounded-lg">
+            <div class="flex space-x-2">
+              <button onclick="addAnnotation()" class="px-3 py-1.5 bg-blue-500 text-white rounded text-xs font-medium hover:bg-blue-600 transition-all">
+                <span class="iconify mr-1" data-icon="solar:add-circle-bold"></span>
+                添加标注
+              </button>
+              <button onclick="deleteAnnotation()" class="px-3 py-1.5 bg-red-500 text-white rounded text-xs font-medium hover:bg-red-600 transition-all">
+                <span class="iconify mr-1" data-icon="solar:trash-bin-bold"></span>
+                删除选中
+              </button>
+            </div>
+            <div class="flex space-x-2">
+              <button class="px-3 py-1.5 bg-slate-200 text-slate-600 rounded text-xs font-medium hover:bg-slate-300 transition-all">
+                <span class="iconify mr-1" data-icon="solar:undo-left-bold"></span>
+                撤销
+              </button>
+              <button class="px-3 py-1.5 bg-slate-200 text-slate-600 rounded text-xs font-medium hover:bg-slate-300 transition-all">
+                <span class="iconify mr-1" data-icon="solar:undo-right-bold"></span>
+                重做
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 标注列表 -->
+        <div class="bg-slate-50 rounded-xl p-4">
+          <h4 class="text-sm font-bold text-slate-700 mb-3">标注列表</h4>
+          <div class="space-y-2 max-h-96 overflow-y-auto">
+            <div class="bg-white p-3 rounded-lg border border-red-200 cursor-pointer hover:shadow-md transition-all">
+              <div class="flex justify-between items-start mb-2">
+                <span class="text-xs font-bold text-slate-700">病灶 #01</span>
+                <span class="text-[10px] px-2 py-0.5 rounded bg-red-100 text-red-600 font-bold">恶性</span>
+              </div>
+              <p class="text-xs text-slate-500 mb-1">置信度: 94.2%</p>
+              <p class="text-xs text-slate-500">大小: 12.8×9.4mm</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 操作按钮 -->
+      <div class="flex justify-end space-x-3 mt-6">
+        <button onclick="closeAnnotationEditor()" class="px-6 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-all">
+          取消
+        </button>
+        <button onclick="saveAnnotations()" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-bold transition-all shadow-lg">
+          保存修改
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 评价反馈模态框 -->
+  <div id="feedbackModal" class="modal">
+    <div class="modal-content w-full max-w-xl p-8">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-bold text-slate-800 flex items-center">
+          <span class="iconify mr-2 tech-blue text-2xl" data-icon="solar:star-bold"></span>
+          AI 诊断评价
+        </h3>
+        <button onclick="closeFeedbackModal()" class="text-slate-400 hover:text-slate-600 transition-all">
+          <span class="iconify text-2xl" data-icon="solar:close-circle-bold"></span>
+        </button>
+      </div>
+
+      <!-- 评分 -->
+      <div class="mb-6">
+        <label class="text-sm font-bold text-slate-700 mb-3 block">诊断准确性评分</label>
+        <div class="flex items-center space-x-2">
+          <span class="iconify rating-star text-3xl text-slate-300" data-icon="solar:star-bold" onclick="setRating(1)"></span>
+          <span class="iconify rating-star text-3xl text-slate-300" data-icon="solar:star-bold" onclick="setRating(2)"></span>
+          <span class="iconify rating-star text-3xl text-slate-300" data-icon="solar:star-bold" onclick="setRating(3)"></span>
+          <span class="iconify rating-star text-3xl text-slate-300" data-icon="solar:star-bold" onclick="setRating(4)"></span>
+          <span class="iconify rating-star text-3xl text-slate-300" data-icon="solar:star-bold" onclick="setRating(5)"></span>
+          <span id="ratingText" class="text-sm text-slate-500 ml-4">未评分</span>
+        </div>
+      </div>
+
+      <!-- 诊断结果 -->
+      <div class="mb-6">
+        <label class="text-sm font-bold text-slate-700 mb-3 block">您的诊断意见</label>
+        <div class="grid grid-cols-2 gap-3">
+          <button class="p-3 border-2 border-slate-200 rounded-lg text-sm font-medium hover:border-green-400 hover:bg-green-50 transition-all">
+            <span class="iconify text-xl text-green-500 mb-1" data-icon="solar:check-circle-bold"></span>
+            <p>同意 AI 诊断</p>
+          </button>
+          <button class="p-3 border-2 border-slate-200 rounded-lg text-sm font-medium hover:border-red-400 hover:bg-red-50 transition-all">
+            <span class="iconify text-xl text-red-500 mb-1" data-icon="solar:close-circle-bold"></span>
+            <p>不同意诊断</p>
+          </button>
+        </div>
+      </div>
+
+      <!-- 备注 -->
+      <div class="mb-6">
+        <label class="text-sm font-bold text-slate-700 mb-2 block">补充说明（可选）</label>
+        <textarea class="w-full px-4 py-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-400 transition-all resize-none" rows="4" placeholder="请输入您的诊断意见或修正建议..."></textarea>
+      </div>
+
+      <!-- 操作按钮 -->
+      <div class="flex justify-end space-x-3">
+        <button onclick="closeFeedbackModal()" class="px-6 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-all">
+          取消
+        </button>
+        <button onclick="submitFeedback()" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-bold transition-all shadow-lg">
+          提交评价
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 添加移动端侧边栏切换功能
+    const createMobileToggle = () => {
+      if (window.innerWidth <= 768) {
+        const aside = document.querySelector('aside');
+        const header = document.querySelector('header');
+
+        if (!document.getElementById('mobile-menu-btn')) {
+          const menuBtn = document.createElement('button');
+          menuBtn.id = 'mobile-menu-btn';
+          menuBtn.className = 'md:hidden p-2 text-slate-600 hover:text-blue-500 transition-all';
+          menuBtn.innerHTML = '<span class="iconify text-2xl" data-icon="solar:hamburger-menu-bold"></span>';
+          menuBtn.onclick = () => aside.classList.toggle('mobile-open');
+          header.insertBefore(menuBtn, header.firstChild);
+        }
+      }
+    };
+
+    createMobileToggle();
+    window.addEventListener('resize', createMobileToggle);
+
+    // ========== 上传功能 ==========
+    function openUploadModal() {
+      document.getElementById('uploadModal').classList.add('active');
+    }
+
+    function closeUploadModal() {
+      document.getElementById('uploadModal').classList.remove('active');
+      document.getElementById('fileList').innerHTML = '';
+    }
+
+    // 文件上传处理
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+
+    uploadZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadZone.classList.add('drag-over');
+    });
+
+    uploadZone.addEventListener('dragleave', () => {
+      uploadZone.classList.remove('drag-over');
+    });
+
+    uploadZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadZone.classList.remove('drag-over');
+      handleFiles(e.dataTransfer.files);
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      handleFiles(e.target.files);
+    });
+
+    function handleFiles(files) {
+      const fileList = document.getElementById('fileList');
+      fileList.innerHTML = '';
+
+      Array.from(files).forEach((file, index) => {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'flex items-center justify-between p-3 bg-slate-50 rounded-lg';
+        fileItem.innerHTML = `
+          <div class="flex items-center space-x-3">
+            <span class="iconify text-2xl text-blue-500" data-icon="solar:file-bold"></span>
+            <div>
+              <p class="text-sm font-medium text-slate-700">${file.name}</p>
+              <p class="text-xs text-slate-400">${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+            </div>
+          </div>
+          <button onclick="removeFile(${index})" class="text-slate-400 hover:text-red-500 transition-all">
+            <span class="iconify" data-icon="solar:close-circle-bold"></span>
+          </button>
+        `;
+        fileList.appendChild(fileItem);
+      });
+    }
+
+    function removeFile(index) {
+      // 实际项目中需要从文件列表中移除
+      console.log('Remove file:', index);
+    }
+
+    function startInference() {
+      // 模拟开始推理任务
+      alert('开始 AI 分析任务...\n\n文件已上传，系统正在处理中。\n预计完成时间: 2-5 分钟');
+      closeUploadModal();
+    }
+
+    // ========== 标注编辑功能 ==========
+    let annotations = [
+      { id: 1, x: 33, y: 50, width: 130, height: 95, label: '病灶01', confidence: 94.2, type: 'malignant' }
+    ];
+    let selectedAnnotation = null;
+
+    function openAnnotationEditor() {
+      document.getElementById('annotationModal').classList.add('active');
+      renderAnnotations();
+    }
+
+    function closeAnnotationEditor() {
+      document.getElementById('annotationModal').classList.remove('active');
+    }
+
+    function renderAnnotations() {
+      const canvas = document.getElementById('annotationCanvas');
+      canvas.innerHTML = '';
+
+      annotations.forEach(ann => {
+        const box = document.createElement('div');
+        box.className = 'annotation-box';
+        box.style.left = ann.x + '%';
+        box.style.top = ann.y + '%';
+        box.style.width = ann.width + 'px';
+        box.style.height = ann.height + 'px';
+        box.style.borderColor = ann.type === 'malignant' ? '#ef4444' : '#f59e0b';
+
+        box.innerHTML = `
+          <span style="position: absolute; top: -24px; left: 0; background: ${ann.type === 'malignant' ? '#ef4444' : '#f59e0b'}; color: white; font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: bold; white-space: nowrap;">
+            ${ann.label}: ${ann.confidence}%
+          </span>
+          <div class="resize-handle nw"></div>
+          <div class="resize-handle ne"></div>
+          <div class="resize-handle sw"></div>
+          <div class="resize-handle se"></div>
+        `;
+
+        box.onclick = () => {
+          selectedAnnotation = ann.id;
+          document.querySelectorAll('.annotation-box').forEach(b => b.classList.remove('selected'));
+          box.classList.add('selected');
+        };
+
+        canvas.appendChild(box);
+      });
+    }
+
+    function addAnnotation() {
+      const newId = Math.max(...annotations.map(a => a.id), 0) + 1;
+      annotations.push({
+        id: newId,
+        x: 40,
+        y: 40,
+        width: 100,
+        height: 80,
+        label: `病灶${String(newId).padStart(2, '0')}`,
+        confidence: 0,
+        type: 'unknown'
+      });
+      renderAnnotations();
+    }
+
+    function deleteAnnotation() {
+      if (selectedAnnotation) {
+        annotations = annotations.filter(a => a.id !== selectedAnnotation);
+        selectedAnnotation = null;
+        renderAnnotations();
+      } else {
+        alert('请先选择要删除的标注');
+      }
+    }
+
+    function saveAnnotations() {
+      alert('标注已保存！\n\n共 ' + annotations.length + ' 个标注框');
+      closeAnnotationEditor();
+    }
+
+    // ========== 评价反馈功能 ==========
+    let currentRating = 0;
+
+    function openFeedbackModal() {
+      document.getElementById('feedbackModal').classList.add('active');
+    }
+
+    function closeFeedbackModal() {
+      document.getElementById('feedbackModal').classList.remove('active');
+      currentRating = 0;
+      updateRatingDisplay();
+    }
+
+    function setRating(rating) {
+      currentRating = rating;
+      updateRatingDisplay();
+    }
+
+    function updateRatingDisplay() {
+      const stars = document.querySelectorAll('.rating-star');
+      const ratingText = document.getElementById('ratingText');
+
+      stars.forEach((star, index) => {
+        if (index < currentRating) {
+          star.classList.add('active');
+        } else {
+          star.classList.remove('active');
+        }
+      });
+
+      const ratingLabels = ['未评分', '很差', '较差', '一般', '良好', '优秀'];
+      ratingText.textContent = ratingLabels[currentRating];
+    }
+
+    function submitFeedback() {
+      if (currentRating === 0) {
+        alert('请先进行评分');
+        return;
+      }
+      alert('评价已提交！\n\n评分: ' + currentRating + ' 星\n感谢您的反馈，这将帮助我们改进 AI 模型。');
+      closeFeedbackModal();
+    }
+
+    // ========== 导出报告功能 ==========
+    function exportReport() {
+      const options = [
+        '导出为 PDF 报告',
+        '导出为 Word 文档',
+        '导出影像数据 (DICOM)',
+        '导出完整病例包'
+      ];
+
+      const choice = prompt('请选择导出格式:\n\n1. ' + options[0] + '\n2. ' + options[1] + '\n3. ' + options[2] + '\n4. ' + options[3] + '\n\n请输入数字 (1-4):');
+
+      if (choice >= 1 && choice <= 4) {
+        alert('正在生成 ' + options[choice - 1] + '...\n\n文件将在生成完成后自动下载。');
+      }
+    }
+
+    // 初始化评分显示
+    updateRatingDisplay();
+
+    // ========== 患者报告加载功能 ==========
+    function loadPatientReport(patientId) {
+      // 模拟加载不同患者的报告数据
+      console.log('加载患者报告:', patientId);
+
+      // 这里可以根据 patientId 加载不同的报告内容
+      // 实际项目中应该从后端 API 获取数据
+
+      // 高亮选中的患者卡片
+      document.querySelectorAll('.patient-card').forEach(card => {
+        card.classList.remove('ring-2', 'ring-blue-400');
+      });
+      event.currentTarget.classList.add('ring-2', 'ring-blue-400');
+
+      // 滚动到顶部以便查看报告
+      document.querySelector('main').scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  </script>
+
+</body>
+
+</html>

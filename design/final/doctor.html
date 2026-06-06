@@ -1,0 +1,1030 @@
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>医疗影像AI分析平台 - 医生端（重构版）</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700&display=swap');
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f7f5fb;
+    }
+
+    .tech-blue {
+      color: #4A90E2;
+    }
+
+    .bg-tech-blue {
+      background-color: #4A90E2;
+    }
+
+    .sidebar-item {
+      transition: all 0.3s ease;
+    }
+
+    .sidebar-item:hover {
+      background: rgba(74, 144, 226, 0.08);
+      color: #4A90E2;
+    }
+
+    .sidebar-item.active {
+      background: rgba(74, 144, 226, 0.1);
+      color: #4A90E2;
+    }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: #64748b;
+    }
+
+    .breadcrumb-separator {
+      color: #cbd5e1;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+  </style>
+</head>
+
+
+<body class="flex h-screen overflow-hidden">
+  <!-- 侧边导航 -->
+  <aside class="w-64 bg-white border-r flex flex-col items-stretch">
+    <div class="h-16 flex items-center px-6 space-x-2 border-b">
+      <span class="iconify text-3xl tech-blue" data-icon="solar:health-bold"></span>
+      <span class="text-xl font-bold tracking-tight">MediVision AI</span>
+    </div>
+    <div class="flex-1 p-4 space-y-2 mt-4">
+      <div class="text-[10px] font-bold text-slate-400 px-2 mb-2 uppercase tracking-widest">主要功能</div>
+      <a class="sidebar-item active flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-600 transition-all" href="#" onclick="showDashboard(); return false;">
+        <span class="iconify text-xl" data-icon="solar:widget-bold"></span>
+        <span class="font-medium">工作台</span>
+      </a>
+      <a class="sidebar-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-600 transition-all" href="#" onclick="showCaseList(); return false;">
+        <span class="iconify text-xl" data-icon="solar:folder-bold"></span>
+        <span class="font-medium">病例管理</span>
+      </a>
+      <div class="text-[10px] font-bold text-slate-400 px-2 mb-2 mt-6 uppercase tracking-widest">数据统计</div>
+      <a class="sidebar-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-600 transition-all" href="#" onclick="showStatistics(); return false;">
+        <span class="iconify text-xl" data-icon="solar:chart-2-bold"></span>
+        <span class="font-medium">统计分析</span>
+      </a>
+    </div>
+    <!-- 用户信息区域 -->
+    <div class="p-4 bg-gradient-to-br from-slate-50 to-blue-50/30 border-t">
+      <div class="flex items-center space-x-3 mb-3 px-2">
+        <img alt="Doctor profile" class="w-10 h-10 rounded-full border-2 border-[#4A90E2] shadow-sm" src="https://modao.cc/agent-py/media/generated_images/2026-03-12/0f81754d5f604e319cd2e96b87479194.jpg">
+        <div>
+          <p class="text-sm font-bold text-slate-700">王志远 主任</p>
+          <p class="text-xs text-[#4A90E2]">放射科 (A区)</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-3 px-2">
+        <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-sm"></div>
+        <span class="text-xs text-slate-500">在线 | 今日: 42例</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 主体区域 -->
+  <main class="flex-1 flex flex-col overflow-y-auto">
+    <header class="h-16 bg-white border-b flex items-center justify-between px-8 shrink-0">
+      <div class="flex items-center space-x-4">
+        <h2 id="pageTitle" class="text-lg font-bold text-slate-800">工作台</h2>
+        <span class="bg-blue-100 text-[#4A90E2] text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-widest">待处理: 15例</span>
+      </div>
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center bg-slate-100 rounded-full px-4 py-1.5 space-x-2">
+          <span class="iconify text-slate-400" data-icon="lucide:search"></span>
+          <input class="bg-transparent border-none outline-none text-xs w-48" placeholder="搜索病例编号或患者姓名" type="text">
+        </div>
+        <div class="relative cursor-pointer">
+          <span class="iconify text-2xl text-slate-400 hover:text-blue-500 transition-colors" data-icon="solar:bell-bing-bold-duotone"></span>
+          <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center animate-pulse">3</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- 工作台内容 -->
+    <div id="dashboard" class="p-8 space-y-8">
+      <!-- 统计概览卡片 -->
+      <div class="grid grid-cols-4 gap-6">
+        <div class="bg-white p-6 rounded-2xl border border-blue-100 shadow-sm">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-1">今日病例数</p>
+          <div class="flex items-end space-x-2">
+            <span class="text-3xl font-bold font-mono text-slate-800">42</span>
+            <span class="text-green-500 text-xs font-bold pb-1">↑ 12%</span>
+          </div>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border border-blue-100 shadow-sm">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-1">待处理检查</p>
+          <div class="flex items-end space-x-2">
+            <span class="text-3xl font-bold font-mono text-slate-800">15</span>
+            <span class="text-slate-400 text-xs pb-1">平均12min</span>
+          </div>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border border-blue-100 shadow-sm">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-1">高风险预警</p>
+          <div class="flex items-end space-x-2">
+            <span class="text-3xl font-bold font-mono text-slate-800">03</span>
+            <span class="text-red-600 text-xs font-bold pb-1 animate-pulse">需立即干预</span>
+          </div>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border border-blue-100 shadow-sm">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-1">推理任务数</p>
+          <div class="flex items-end space-x-2">
+            <span class="text-3xl font-bold font-mono text-slate-800">68</span>
+            <span class="text-slate-400 text-xs pb-1">准确率95.3%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 快捷入口 -->
+      <div class="bg-white rounded-2xl border border-blue-100 shadow-sm p-6">
+        <h3 class="font-bold text-slate-800 mb-4 flex items-center">
+          <span class="iconify mr-2 tech-blue" data-icon="solar:bolt-bold"></span>
+          快捷操作
+        </h3>
+        <div class="grid grid-cols-4 gap-4">
+          <button onclick="showCreateCase()" class="flex flex-col items-center justify-center p-4 border-2 border-dashed border-slate-200 rounded-xl hover:border-[#4A90E2] hover:bg-blue-50 transition-all">
+            <span class="iconify text-3xl tech-blue mb-2" data-icon="solar:add-circle-bold"></span>
+            <span class="text-sm font-medium text-slate-700">新建病例</span>
+          </button>
+          <button onclick="showCaseList()" class="flex flex-col items-center justify-center p-4 border-2 border-dashed border-slate-200 rounded-xl hover:border-[#4A90E2] hover:bg-blue-50 transition-all">
+            <span class="iconify text-3xl tech-blue mb-2" data-icon="solar:folder-open-bold"></span>
+            <span class="text-sm font-medium text-slate-700">查看病例</span>
+          </button>
+          <button class="flex flex-col items-center justify-center p-4 border-2 border-dashed border-slate-200 rounded-xl hover:border-[#4A90E2] hover:bg-blue-50 transition-all">
+            <span class="iconify text-3xl tech-blue mb-2" data-icon="solar:chart-bold"></span>
+            <span class="text-sm font-medium text-slate-700">数据统计</span>
+          </button>
+          <button class="flex flex-col items-center justify-center p-4 border-2 border-dashed border-slate-200 rounded-xl hover:border-[#4A90E2] hover:bg-blue-50 transition-all">
+            <span class="iconify text-3xl tech-blue mb-2" data-icon="solar:settings-bold"></span>
+            <span class="text-sm font-medium text-slate-700">系统设置</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 病例列表页 -->
+    <div id="caseList" class="p-8 space-y-6 hidden">
+      <div class="breadcrumb">
+        <span class="font-medium text-slate-800">病例管理</span>
+      </div>
+
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-2xl font-bold text-slate-800 flex items-center">
+            <span class="iconify mr-3 tech-blue text-3xl" data-icon="solar:folder-bold"></span>
+            病例列表
+          </h3>
+          <p class="text-sm text-slate-500 mt-1">查看和管理所有病例记录</p>
+        </div>
+        <button onclick="showCreateCase()" class="text-sm bg-[#4A90E2] hover:bg-[#3a7bc8] text-white px-4 py-2 rounded-lg transition-all flex items-center">
+          <span class="iconify mr-2" data-icon="solar:add-circle-bold"></span>新建病例
+        </button>
+      </div>
+
+      <!-- 筛选栏 -->
+      <div class="bg-white rounded-xl border border-blue-100 shadow-sm p-4 flex items-center space-x-4">
+        <input class="flex-1 border rounded-lg px-4 py-2 text-sm outline-none focus:border-[#4A90E2]" placeholder="搜索病例编号或患者姓名" type="text">
+        <select class="text-sm border rounded-lg px-4 py-2 bg-white outline-none">
+          <option>全部时间</option>
+          <option>今天</option>
+          <option>本周</option>
+          <option>本月</option>
+        </select>
+      </div>
+
+      <!-- 病例列表 -->
+      <div class="bg-white rounded-2xl border border-blue-100 shadow-sm overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 text-slate-500 text-left font-medium border-b">
+            <tr>
+              <th class="px-6 py-4">病例编号</th>
+              <th class="px-6 py-4">患者信息</th>
+              <th class="px-6 py-4">检查数</th>
+              <th class="px-6 py-4">影像数</th>
+              <th class="px-6 py-4">最后更新</th>
+              <th class="px-6 py-4">操作</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <tr class="hover:bg-slate-50 cursor-pointer" onclick="showCaseDetail('202603120001')">
+              <td class="px-6 py-4">
+                <p class="font-mono text-slate-800 font-medium">202603120001</p>
+              </td>
+              <td class="px-6 py-4">
+                <div>
+                  <p class="font-bold text-slate-800">李*国</p>
+                  <p class="text-xs text-slate-500">65岁 男</p>
+                </div>
+              </td>
+              <td class="px-6 py-4">3</td>
+              <td class="px-6 py-4">5</td>
+              <td class="px-6 py-4">2026-03-12 14:30</td>
+              <td class="px-6 py-4">
+                <div class="flex space-x-2">
+                  <button onclick="event.stopPropagation(); showCaseDetail('202603120001')" class="text-[#4A90E2] hover:text-[#3a7bc8] text-xs font-medium">查看</button>
+                  <button onclick="event.stopPropagation(); deleteCase('202603120001')" class="text-red-500 hover:text-red-700 text-xs font-medium">删除</button>
+                </div>
+              </td>
+            </tr>
+            <tr class="hover:bg-slate-50 cursor-pointer" onclick="showCaseDetail('202603120002')">
+              <td class="px-6 py-4">
+                <p class="font-mono text-slate-800 font-medium">202603120002</p>
+              </td>
+              <td class="px-6 py-4">
+                <div>
+                  <p class="font-bold text-slate-800">张*梅</p>
+                  <p class="text-xs text-slate-500">42岁 女</p>
+                </div>
+              </td>
+              <td class="px-6 py-4">2</td>
+              <td class="px-6 py-4">3</td>
+              <td class="px-6 py-4">2026-03-12 11:20</td>
+              <td class="px-6 py-4">
+                <div class="flex space-x-2">
+                  <button onclick="event.stopPropagation(); showCaseDetail('202603120002')" class="text-[#4A90E2] hover:text-[#3a7bc8] text-xs font-medium">查看</button>
+                  <button onclick="event.stopPropagation(); deleteCase('202603120002')" class="text-red-500 hover:text-red-700 text-xs font-medium">删除</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 病例详情页 -->
+    <div id="caseDetail" class="p-8 space-y-6 hidden">
+      <div class="breadcrumb">
+        <a href="#" onclick="showCaseList(); return false;" class="hover:text-[#4A90E2]">病例管理</a>
+        <span class="breadcrumb-separator">›</span>
+        <span class="font-medium text-slate-800">病例详情</span>
+      </div>
+
+      <!-- 病例基础信息卡片 -->
+      <div class="bg-white rounded-2xl border border-blue-100 shadow-sm p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-xl font-bold text-slate-800 flex items-center">
+            <span class="iconify mr-2 tech-blue text-2xl" data-icon="solar:document-bold"></span>
+            病例基础信息
+          </h3>
+          <div class="flex space-x-2">
+            <button onclick="editCase()" class="text-sm bg-white border border-[#4A90E2] text-[#4A90E2] hover:bg-blue-50 px-4 py-2 rounded-lg transition-all flex items-center">
+              <span class="iconify mr-2" data-icon="solar:pen-bold"></span>编辑
+            </button>
+            <button onclick="deleteCase()" class="text-sm bg-white border border-red-500 text-red-500 hover:bg-red-50 px-4 py-2 rounded-lg transition-all flex items-center">
+              <span class="iconify mr-2" data-icon="solar:trash-bin-bold"></span>删除病例
+            </button>
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-6">
+          <div>
+            <p class="text-xs text-slate-400 mb-1">病例编号</p>
+            <p class="text-sm font-mono font-bold text-slate-800">202603120001</p>
+          </div>
+          <div>
+            <p class="text-xs text-slate-400 mb-1">患者姓名</p>
+            <p class="text-sm font-bold text-slate-800">李*国</p>
+          </div>
+          <div>
+            <p class="text-xs text-slate-400 mb-1">性别</p>
+            <p class="text-sm text-slate-800">男</p>
+          </div>
+          <div>
+            <p class="text-xs text-slate-400 mb-1">年龄</p>
+            <p class="text-sm text-slate-800">65岁</p>
+          </div>
+          <div>
+            <p class="text-xs text-slate-400 mb-1">创建时间</p>
+            <p class="text-sm text-slate-800">2026-03-12 10:00</p>
+          </div>
+          <div>
+            <p class="text-xs text-slate-400 mb-1">最后更新</p>
+            <p class="text-sm text-slate-800">2026-03-12 14:30</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 检查记录列表 -->
+      <div class="bg-white rounded-2xl border border-blue-100 shadow-sm p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-xl font-bold text-slate-800 flex items-center">
+            <span class="iconify mr-2 tech-blue text-2xl" data-icon="solar:clipboard-list-bold"></span>
+            检查记录列表
+          </h3>
+          <button onclick="createExamination()" class="text-sm bg-[#4A90E2] hover:bg-[#3a7bc8] text-white px-4 py-2 rounded-lg transition-all flex items-center">
+            <span class="iconify mr-2" data-icon="solar:add-circle-bold"></span>新建检查
+          </button>
+        </div>
+
+        <div class="space-y-4">
+          <!-- 检查记录1 -->
+          <div class="border border-slate-200 rounded-xl p-4 hover:border-[#4A90E2] hover:bg-blue-50/30 transition-all cursor-pointer" onclick="showExaminationDetail('exam001')">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center space-x-3">
+                <span class="iconify text-2xl tech-blue" data-icon="solar:health-bold"></span>
+                <div>
+                  <p class="font-bold text-slate-800">检查1: 胸部X光</p>
+                  <p class="text-xs text-slate-500">2026-03-12 10:15</p>
+                </div>
+              </div>
+              <div class="flex items-center space-x-4">
+                <div class="text-right">
+                  <p class="text-xs text-slate-400">影像数量</p>
+                  <p class="text-sm font-bold text-slate-800">3张</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-xs text-slate-400">推理次数</p>
+                  <p class="text-sm font-bold text-slate-800">2次</p>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex space-x-2">
+                <span class="bg-green-100 text-green-600 px-2 py-0.5 rounded text-[10px] font-bold">已完成推理</span>
+                <span class="bg-blue-100 text-blue-600 px-2 py-0.5 rounded text-[10px] font-bold">3张影像</span>
+              </div>
+              <div class="flex space-x-2">
+                <button onclick="event.stopPropagation(); showExaminationDetail('exam001')" class="text-[#4A90E2] hover:text-[#3a7bc8] text-xs font-medium">查看详情</button>
+                <button onclick="event.stopPropagation(); deleteExamination('exam001')" class="text-red-500 hover:text-red-700 text-xs font-medium">删除</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 检查记录2 -->
+          <div class="border border-slate-200 rounded-xl p-4 hover:border-[#4A90E2] hover:bg-blue-50/30 transition-all cursor-pointer" onclick="showExaminationDetail('exam002')">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center space-x-3">
+                <span class="iconify text-2xl tech-blue" data-icon="solar:health-bold"></span>
+                <div>
+                  <p class="font-bold text-slate-800">检查2: 胸部X光</p>
+                  <p class="text-xs text-slate-500">2026-03-12 14:30</p>
+                </div>
+              </div>
+              <div class="flex items-center space-x-4">
+                <div class="text-right">
+                  <p class="text-xs text-slate-400">影像数量</p>
+                  <p class="text-sm font-bold text-slate-800">2张</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-xs text-slate-400">推理次数</p>
+                  <p class="text-sm font-bold text-slate-800">1次</p>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex space-x-2">
+                <span class="bg-green-100 text-green-600 px-2 py-0.5 rounded text-[10px] font-bold">已完成推理</span>
+                <span class="bg-blue-100 text-blue-600 px-2 py-0.5 rounded text-[10px] font-bold">2张影像</span>
+              </div>
+              <div class="flex space-x-2">
+                <button onclick="event.stopPropagation(); showExaminationDetail('exam002')" class="text-[#4A90E2] hover:text-[#3a7bc8] text-xs font-medium">查看详情</button>
+                <button onclick="event.stopPropagation(); deleteExamination('exam002')" class="text-red-500 hover:text-red-700 text-xs font-medium">删除</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 检查详情页 -->
+    <div id="examinationDetail" class="p-8 space-y-6 hidden">
+      <div class="breadcrumb">
+        <a href="#" onclick="showCaseList(); return false;" class="hover:text-[#4A90E2]">病例管理</a>
+        <span class="breadcrumb-separator">›</span>
+        <a href="#" onclick="showCaseDetail('202603120001'); return false;" class="hover:text-[#4A90E2]">病例详情</a>
+        <span class="breadcrumb-separator">›</span>
+        <span class="font-medium text-slate-800">检查详情</span>
+      </div>
+
+      <!-- 检查基础信息 -->
+      <div class="bg-white rounded-xl border border-blue-100 shadow-sm p-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-4">
+            <span class="iconify text-2xl tech-blue" data-icon="solar:health-bold"></span>
+            <div>
+              <p class="font-bold text-slate-800">检查类型: 胸部X光</p>
+              <p class="text-xs text-slate-500">检查时间: 2026-03-12 10:15</p>
+            </div>
+          </div>
+          <div class="flex space-x-2">
+            <span class="bg-blue-100 text-blue-600 px-3 py-1 rounded text-xs font-bold">3张影像</span>
+            <span class="bg-green-100 text-green-600 px-3 py-1 rounded text-xs font-bold">2次推理</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-12 gap-6">
+        <!-- 左侧：影像管理 -->
+        <div class="col-span-4 bg-white rounded-2xl border border-blue-100 shadow-sm p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-slate-800 flex items-center">
+              <span class="iconify mr-2 tech-blue" data-icon="solar:gallery-bold"></span>
+              影像管理
+            </h3>
+            <button onclick="uploadImage()" class="text-xs bg-[#4A90E2] hover:bg-[#3a7bc8] text-white px-3 py-1.5 rounded-lg transition-all flex items-center">
+              <span class="iconify mr-1" data-icon="solar:upload-bold"></span>上传
+            </button>
+          </div>
+
+          <div class="space-y-3">
+            <!-- 影像1 -->
+            <div class="border border-slate-200 rounded-lg p-3 hover:border-[#4A90E2] transition-all">
+              <div class="bg-slate-100 rounded-lg h-32 mb-2 flex items-center justify-center">
+                <span class="iconify text-4xl text-slate-400" data-icon="solar:gallery-bold"></span>
+              </div>
+              <p class="text-xs font-mono text-slate-700 mb-2">image_001.png</p>
+              <div class="flex space-x-2">
+                <button onclick="viewImage('img001')" class="flex-1 text-xs bg-blue-50 text-[#4A90E2] hover:bg-blue-100 px-2 py-1 rounded transition-all">查看</button>
+                <button onclick="deleteImage('img001')" class="flex-1 text-xs bg-red-50 text-red-500 hover:bg-red-100 px-2 py-1 rounded transition-all">删除</button>
+              </div>
+            </div>
+
+            <!-- 影像2 -->
+            <div class="border border-slate-200 rounded-lg p-3 hover:border-[#4A90E2] transition-all">
+              <div class="bg-slate-100 rounded-lg h-32 mb-2 flex items-center justify-center">
+                <span class="iconify text-4xl text-slate-400" data-icon="solar:gallery-bold"></span>
+              </div>
+              <p class="text-xs font-mono text-slate-700 mb-2">image_002.png</p>
+              <div class="flex space-x-2">
+                <button onclick="viewImage('img002')" class="flex-1 text-xs bg-blue-50 text-[#4A90E2] hover:bg-blue-100 px-2 py-1 rounded transition-all">查看</button>
+                <button onclick="deleteImage('img002')" class="flex-1 text-xs bg-red-50 text-red-500 hover:bg-red-100 px-2 py-1 rounded transition-all">删除</button>
+              </div>
+            </div>
+
+            <!-- 影像3 -->
+            <div class="border border-slate-200 rounded-lg p-3 hover:border-[#4A90E2] transition-all">
+              <div class="bg-slate-100 rounded-lg h-32 mb-2 flex items-center justify-center">
+                <span class="iconify text-4xl text-slate-400" data-icon="solar:gallery-bold"></span>
+              </div>
+              <p class="text-xs font-mono text-slate-700 mb-2">image_003.png</p>
+              <div class="flex space-x-2">
+                <button onclick="viewImage('img003')" class="flex-1 text-xs bg-blue-50 text-[#4A90E2] hover:bg-blue-100 px-2 py-1 rounded transition-all">查看</button>
+                <button onclick="deleteImage('img003')" class="flex-1 text-xs bg-red-50 text-red-500 hover:bg-red-100 px-2 py-1 rounded transition-all">删除</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右侧：AI推理区域 -->
+        <div class="col-span-8 space-y-6">
+          <!-- 推理配置 -->
+          <div class="bg-white rounded-2xl border border-blue-100 shadow-sm p-6">
+            <h3 class="font-bold text-slate-800 mb-4 flex items-center">
+              <span class="iconify mr-2 tech-blue" data-icon="solar:cpu-bolt-bold"></span>
+              AI推理配置
+            </h3>
+            <div class="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label class="text-xs text-slate-500 mb-1 block">选择影像</label>
+                <select class="w-full text-sm border rounded-lg px-3 py-2 bg-white outline-none focus:border-[#4A90E2]">
+                  <option>image_001.png</option>
+                  <option>image_002.png</option>
+                  <option>image_003.png</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs text-slate-500 mb-1 block">AI模型</label>
+                <select class="w-full text-sm border rounded-lg px-3 py-2 bg-white outline-none focus:border-[#4A90E2]">
+                  <option>ResNet50</option>
+                  <option>VGG16</option>
+                  <option>DenseNet121</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs text-slate-500 mb-1 block">置信度阈值</label>
+                <input type="number" value="0.7" step="0.1" min="0" max="1" class="w-full text-sm border rounded-lg px-3 py-2 outline-none focus:border-[#4A90E2]">
+              </div>
+              <div>
+                <label class="text-xs text-slate-500 mb-1 block">检测模式</label>
+                <select class="w-full text-sm border rounded-lg px-3 py-2 bg-white outline-none focus:border-[#4A90E2]">
+                  <option>标准模式</option>
+                  <option>高精度模式</option>
+                  <option>快速模式</option>
+                </select>
+              </div>
+            </div>
+            <button onclick="startInference()" class="w-full bg-[#4A90E2] hover:bg-[#3a7bc8] text-white px-4 py-2.5 rounded-lg transition-all flex items-center justify-center font-medium">
+              <span class="iconify mr-2 text-lg" data-icon="solar:play-bold"></span>
+              发起AI推理
+            </button>
+          </div>
+
+          <!-- 推理结果展示 -->
+          <div class="bg-white rounded-2xl border border-blue-100 shadow-sm p-6">
+            <h3 class="font-bold text-slate-800 mb-4 flex items-center">
+              <span class="iconify mr-2 tech-blue" data-icon="solar:chart-square-bold"></span>
+              推理结果展示
+            </h3>
+            <div class="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <p class="text-xs text-slate-500 mb-2">原始影像</p>
+                <div class="bg-slate-100 rounded-lg h-64 flex items-center justify-center">
+                  <span class="text-slate-400 text-sm">原始X光影像</span>
+                </div>
+              </div>
+              <div>
+                <p class="text-xs text-slate-500 mb-2">AI标注结果</p>
+                <div class="bg-slate-100 rounded-lg h-64 flex items-center justify-center">
+                  <span class="text-slate-400 text-sm">AI标注影像</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 推理结果详情 -->
+            <div class="bg-slate-50 rounded-lg p-4 mb-4">
+              <div class="grid grid-cols-3 gap-4">
+                <div>
+                  <p class="text-xs text-slate-400 mb-1">分类结果</p>
+                  <p class="text-sm font-bold text-slate-800">Pneumonia</p>
+                </div>
+                <div>
+                  <p class="text-xs text-slate-400 mb-1">置信度</p>
+                  <p class="text-sm font-bold text-slate-800">0.87</p>
+                </div>
+                <div>
+                  <p class="text-xs text-slate-400 mb-1">检测框数量</p>
+                  <p class="text-sm font-bold text-slate-800">2个</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="flex space-x-3">
+              <button onclick="editBoundingBox()" class="flex-1 bg-white border border-[#4A90E2] text-[#4A90E2] hover:bg-blue-50 px-4 py-2 rounded-lg transition-all flex items-center justify-center">
+                <span class="iconify mr-2" data-icon="solar:pen-bold"></span>
+                编辑检测框
+              </button>
+              <button onclick="rateResult()" class="flex-1 bg-white border border-orange-500 text-orange-500 hover:bg-orange-50 px-4 py-2 rounded-lg transition-all flex items-center justify-center">
+                <span class="iconify mr-2" data-icon="solar:star-bold"></span>
+                评价结果
+              </button>
+              <button onclick="exportResult()" class="flex-1 bg-white border border-green-500 text-green-500 hover:bg-green-50 px-4 py-2 rounded-lg transition-all flex items-center justify-center">
+                <span class="iconify mr-2" data-icon="solar:download-bold"></span>
+                导出结果
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 推理历史记录 -->
+      <div class="bg-white rounded-2xl border border-blue-100 shadow-sm p-6">
+        <h3 class="font-bold text-slate-800 mb-4 flex items-center">
+          <span class="iconify mr-2 tech-blue" data-icon="solar:history-bold"></span>
+          推理历史记录
+        </h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 text-slate-500 text-left font-medium border-b">
+              <tr>
+                <th class="px-4 py-3">任务ID</th>
+                <th class="px-4 py-3">影像</th>
+                <th class="px-4 py-3">模型</th>
+                <th class="px-4 py-3">状态</th>
+                <th class="px-4 py-3">结果</th>
+                <th class="px-4 py-3">置信度</th>
+                <th class="px-4 py-3">评价</th>
+                <th class="px-4 py-3">时间</th>
+                <th class="px-4 py-3">操作</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <tr class="hover:bg-slate-50">
+                <td class="px-4 py-3 font-mono text-xs">T001</td>
+                <td class="px-4 py-3">image_001.png</td>
+                <td class="px-4 py-3">ResNet50</td>
+                <td class="px-4 py-3">
+                  <span class="bg-green-100 text-green-600 px-2 py-0.5 rounded text-[10px] font-bold">成功</span>
+                </td>
+                <td class="px-4 py-3">Pneumonia</td>
+                <td class="px-4 py-3">0.87</td>
+                <td class="px-4 py-3">
+                  <span class="text-yellow-500">★★★★☆</span>
+                </td>
+                <td class="px-4 py-3 text-xs">2026-03-12 10:20</td>
+                <td class="px-4 py-3">
+                  <button class="text-[#4A90E2] hover:text-[#3a7bc8] text-xs font-medium">查看</button>
+                </td>
+              </tr>
+              <tr class="hover:bg-slate-50">
+                <td class="px-4 py-3 font-mono text-xs">T002</td>
+                <td class="px-4 py-3">image_002.png</td>
+                <td class="px-4 py-3">ResNet50</td>
+                <td class="px-4 py-3">
+                  <span class="bg-green-100 text-green-600 px-2 py-0.5 rounded text-[10px] font-bold">成功</span>
+                </td>
+                <td class="px-4 py-3">Normal</td>
+                <td class="px-4 py-3">0.92</td>
+                <td class="px-4 py-3">
+                  <span class="text-yellow-500">★★★★★</span>
+                </td>
+                <td class="px-4 py-3 text-xs">2026-03-12 10:25</td>
+                <td class="px-4 py-3">
+                  <button class="text-[#4A90E2] hover:text-[#3a7bc8] text-xs font-medium">查看</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 统计分析页 -->
+    <div id="statistics" class="p-8 space-y-6 hidden">
+      <div class="breadcrumb">
+        <span class="font-medium text-slate-800">统计分析</span>
+      </div>
+
+      <div>
+        <h3 class="text-2xl font-bold text-slate-800 flex items-center">
+          <span class="iconify mr-3 tech-blue text-3xl" data-icon="solar:chart-2-bold"></span>
+          数据统计报表
+        </h3>
+        <p class="text-sm text-slate-500 mt-1">查看系统数据统计和分析报表</p>
+      </div>
+
+      <!-- 统计卡片 -->
+      <div class="grid grid-cols-4 gap-6">
+        <div class="bg-white p-6 rounded-2xl border border-blue-100 shadow-sm">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-1">总病例数</p>
+          <div class="flex items-end space-x-2">
+            <span class="text-3xl font-bold font-mono text-slate-800">1,247</span>
+            <span class="text-green-500 text-xs font-bold pb-1">↑ 8.5%</span>
+          </div>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border border-blue-100 shadow-sm">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-1">总检查数</p>
+          <div class="flex items-end space-x-2">
+            <span class="text-3xl font-bold font-mono text-slate-800">3,521</span>
+            <span class="text-green-500 text-xs font-bold pb-1">↑ 12.3%</span>
+          </div>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border border-blue-100 shadow-sm">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-1">总影像数</p>
+          <div class="flex items-end space-x-2">
+            <span class="text-3xl font-bold font-mono text-slate-800">8,964</span>
+            <span class="text-green-500 text-xs font-bold pb-1">↑ 15.7%</span>
+          </div>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border border-blue-100 shadow-sm">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-1">推理任务数</p>
+          <div class="flex items-end space-x-2">
+            <span class="text-3xl font-bold font-mono text-slate-800">12,458</span>
+            <span class="text-green-500 text-xs font-bold pb-1">↑ 18.2%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 图表区域 -->
+      <div class="grid grid-cols-2 gap-6">
+        <div class="bg-white rounded-2xl border border-blue-100 shadow-sm p-6">
+          <h4 class="font-bold text-slate-800 mb-4">每日病例趋势</h4>
+          <div id="caseChart" style="height: 300px;"></div>
+        </div>
+        <div class="bg-white rounded-2xl border border-blue-100 shadow-sm p-6">
+          <h4 class="font-bold text-slate-800 mb-4">推理结果分布</h4>
+          <div id="resultChart" style="height: 300px;"></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- 新建病例弹窗 -->
+  <div id="createCaseModal" class="modal">
+    <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xl font-bold text-slate-800 flex items-center">
+          <span class="iconify mr-2 tech-blue text-2xl" data-icon="solar:add-circle-bold"></span>
+          新建病例
+        </h3>
+        <button onclick="closeCreateCaseModal()" class="text-slate-400 hover:text-slate-600">
+          <span class="iconify text-2xl" data-icon="solar:close-circle-bold"></span>
+        </button>
+      </div>
+      <form onsubmit="submitCreateCase(event)" class="space-y-4">
+        <div>
+          <label class="text-sm text-slate-600 mb-1 block">患者姓名 *</label>
+          <input type="text" id="patientName" required maxlength="20" class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:border-[#4A90E2]" placeholder="请输入患者姓名（不超过20字）">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-sm text-slate-600 mb-1 block">性别 *</label>
+            <select id="patientGender" required class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:border-[#4A90E2]">
+              <option value="">请选择</option>
+              <option value="1">男</option>
+              <option value="0">女</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-sm text-slate-600 mb-1 block">年龄 *</label>
+            <input type="number" id="patientAge" required min="0" max="200" class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:border-[#4A90E2]" placeholder="0~200">
+          </div>
+        </div>
+        <div>
+          <label class="text-sm text-slate-600 mb-1 block">身份证号 *</label>
+          <input type="text" id="patientIdNumber" required class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:border-[#4A90E2]" placeholder="请输入身份证号">
+        </div>
+        <div>
+          <label class="text-sm text-slate-600 mb-1 block">联系方式 *</label>
+          <input type="text" id="patientContact" required class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:border-[#4A90E2]" placeholder="请输入联系方式">
+        </div>
+        <div>
+          <label class="text-sm text-slate-600 mb-1 block">过往病史</label>
+          <textarea id="patientMedicalHistory" rows="2" class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:border-[#4A90E2]" placeholder="请输入过往病史（可选）"></textarea>
+        </div>
+        <div>
+          <label class="text-sm text-slate-600 mb-1 block">病例描述</label>
+          <textarea id="patientCaseDesc" rows="2" class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:border-[#4A90E2]" placeholder="请输入病例描述（可选）"></textarea>
+        </div>
+        <div class="flex space-x-3 pt-4">
+          <button type="button" onclick="closeCreateCaseModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg transition-all">
+            取消
+          </button>
+          <button type="submit" class="flex-1 bg-[#4A90E2] hover:bg-[#3a7bc8] text-white px-4 py-2 rounded-lg transition-all">
+            创建病例
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 新建检查弹窗 -->
+  <div id="createExaminationModal" class="modal">
+    <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xl font-bold text-slate-800 flex items-center">
+          <span class="iconify mr-2 tech-blue text-2xl" data-icon="solar:add-circle-bold"></span>
+          新建检查
+        </h3>
+        <button onclick="closeCreateExaminationModal()" class="text-slate-400 hover:text-slate-600">
+          <span class="iconify text-2xl" data-icon="solar:close-circle-bold"></span>
+        </button>
+      </div>
+      <form onsubmit="submitCreateExamination(event)" class="space-y-4">
+        <div>
+          <label class="text-sm text-slate-600 mb-1 block">检查类型 *</label>
+          <select id="examinationType" required class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:border-[#4A90E2]">
+            <option value="">请选择检查类型</option>
+            <option value="胸部X光">胸部X光</option>
+            <option value="胸部CT">胸部CT</option>
+            <option value="胸部MRI">胸部MRI</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-sm text-slate-600 mb-1 block">检查时间 *</label>
+          <input type="datetime-local" id="examinationTime" required class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:border-[#4A90E2]">
+        </div>
+        <div>
+          <label class="text-sm text-slate-600 mb-1 block">检查描述</label>
+          <textarea id="examinationDesc" rows="3" class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:border-[#4A90E2]" placeholder="请输入检查描述（可选）"></textarea>
+        </div>
+        <div class="flex space-x-3 pt-4">
+          <button type="button" onclick="closeCreateExaminationModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg transition-all">
+            取消
+          </button>
+          <button type="submit" class="flex-1 bg-[#4A90E2] hover:bg-[#3a7bc8] text-white px-4 py-2 rounded-lg transition-all">
+            创建检查
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</body>
+
+<script>
+  // 页面切换函数
+  function showDashboard() {
+    hideAllPages();
+    document.getElementById('dashboard').classList.remove('hidden');
+    document.getElementById('pageTitle').textContent = '工作台';
+    updateActiveMenu(0);
+  }
+
+  function showCaseList() {
+    hideAllPages();
+    document.getElementById('caseList').classList.remove('hidden');
+    document.getElementById('pageTitle').textContent = '病例管理';
+    updateActiveMenu(1);
+  }
+
+  function showCaseDetail(caseId) {
+    hideAllPages();
+    document.getElementById('caseDetail').classList.remove('hidden');
+    document.getElementById('pageTitle').textContent = '病例详情';
+    updateActiveMenu(1);
+  }
+
+  function showExaminationDetail(examId) {
+    hideAllPages();
+    document.getElementById('examinationDetail').classList.remove('hidden');
+    document.getElementById('pageTitle').textContent = '检查详情';
+    updateActiveMenu(1);
+  }
+
+  function showStatistics() {
+    hideAllPages();
+    document.getElementById('statistics').classList.remove('hidden');
+    document.getElementById('pageTitle').textContent = '统计分析';
+    updateActiveMenu(2);
+    initCharts();
+  }
+
+  function hideAllPages() {
+    document.getElementById('dashboard').classList.add('hidden');
+    document.getElementById('caseList').classList.add('hidden');
+    document.getElementById('caseDetail').classList.add('hidden');
+    document.getElementById('examinationDetail').classList.add('hidden');
+    document.getElementById('statistics').classList.add('hidden');
+  }
+
+  function updateActiveMenu(index) {
+    const items = document.querySelectorAll('.sidebar-item');
+    items.forEach((item, i) => {
+      if (i === index) {
+        item.classList.add('active');
+      } else {
+        item.classList.remove('active');
+      }
+    });
+  }
+
+  // 业务操作函数
+  function showCreateCase() {
+    // 生成病例编号
+    const now = new Date();
+    const caseNumber = now.getFullYear() +
+                      String(now.getMonth() + 1).padStart(2, '0') +
+                      String(now.getDate()).padStart(2, '0') +
+                      String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+    document.getElementById('createCaseModal').classList.add('active');
+  }
+
+  function closeCreateCaseModal() {
+    document.getElementById('createCaseModal').classList.remove('active');
+    document.getElementById('patientName').value = '';
+    document.getElementById('patientGender').value = '';
+    document.getElementById('patientAge').value = '';
+  }
+
+  function submitCreateCase(event) {
+    event.preventDefault();
+    const caseNumber = document.getElementById('caseNumber').value;
+    const patientName = document.getElementById('patientName').value;
+    const patientGender = document.getElementById('patientGender').value;
+    const patientAge = document.getElementById('patientAge').value;
+
+    alert(`病例创建成功！\n病例编号: ${caseNumber}\n患者: ${patientName} ${patientAge}岁 ${patientGender}`);
+    closeCreateCaseModal();
+    showCaseList();
+  }
+
+  function editCase() {
+    alert('编辑病例信息');
+  }
+
+  function deleteCase(caseId) {
+    if (confirm('确定要删除此病例吗？此操作不可恢复。')) {
+      alert('删除病例: ' + (caseId || '当前病例'));
+    }
+  }
+
+  function createExamination() {
+    // 设置默认检查时间为当前时间
+    const now = new Date();
+    const dateTimeString = now.getFullYear() + '-' +
+                          String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                          String(now.getDate()).padStart(2, '0') + 'T' +
+                          String(now.getHours()).padStart(2, '0') + ':' +
+                          String(now.getMinutes()).padStart(2, '0');
+    document.getElementById('examinationTime').value = dateTimeString;
+    document.getElementById('createExaminationModal').classList.add('active');
+  }
+
+  function closeCreateExaminationModal() {
+    document.getElementById('createExaminationModal').classList.remove('active');
+    document.getElementById('examinationType').value = '';
+    document.getElementById('examinationTime').value = '';
+    document.getElementById('examinationDesc').value = '';
+  }
+
+  function submitCreateExamination(event) {
+    event.preventDefault();
+    const examinationType = document.getElementById('examinationType').value;
+    const examinationTime = document.getElementById('examinationTime').value;
+    const examinationDesc = document.getElementById('examinationDesc').value;
+
+    alert(`检查记录创建成功！\n检查类型: ${examinationType}\n检查时间: ${examinationTime}\n描述: ${examinationDesc || '无'}`);
+    closeCreateExaminationModal();
+  }
+
+  function deleteExamination(examId) {
+    if (confirm('确定要删除此检查记录吗？\n\n警告：将同步删除该检查下的所有影像和推理任务！')) {
+      alert('删除检查记录: ' + examId);
+    }
+  }
+
+  function uploadImage() {
+    alert('打开影像上传对话框');
+  }
+
+  function viewImage(imageId) {
+    alert('查看影像: ' + imageId);
+  }
+
+  function deleteImage(imageId) {
+    if (confirm('确定要删除此影像吗？')) {
+      alert('删除影像: ' + imageId);
+    }
+  }
+
+  function startInference() {
+    alert('发起AI推理任务');
+  }
+
+  function editBoundingBox() {
+    alert('编辑检测框');
+  }
+
+  function rateResult() {
+    alert('评价推理结果');
+  }
+
+  function exportResult() {
+    alert('导出推理结果');
+  }
+
+  // 初始化图表
+  function initCharts() {
+    // 病例趋势图
+    const caseChart = echarts.init(document.getElementById('caseChart'));
+    caseChart.setOption({
+      tooltip: { trigger: 'axis' },
+      xAxis: {
+        type: 'category',
+        data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+      },
+      yAxis: { type: 'value' },
+      series: [{
+        data: [35, 42, 38, 45, 48, 32, 28],
+        type: 'line',
+        smooth: true,
+        itemStyle: { color: '#4A90E2' }
+      }]
+    });
+
+    // 结果分布图
+    const resultChart = echarts.init(document.getElementById('resultChart'));
+    resultChart.setOption({
+      tooltip: { trigger: 'item' },
+      series: [{
+        type: 'pie',
+        radius: '60%',
+        data: [
+          { value: 456, name: 'Pneumonia' },
+          { value: 782, name: 'Normal' },
+          { value: 123, name: 'Other' }
+        ],
+        itemStyle: {
+          color: function(params) {
+            const colors = ['#4A90E2', '#10B981', '#F59E0B'];
+            return colors[params.dataIndex];
+          }
+        }
+      }]
+    });
+  }
+
+  // 页面加载完成后初始化
+  window.onload = function() {
+    showDashboard();
+  };
+</script>
+
+</html>

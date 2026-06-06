@@ -1,0 +1,561 @@
+### 0. 登录默认的系统管理员 获取 Token
+POST http://localhost:8080/api/v1/account/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin123"
+}
+
+> {%
+    if (response.status === 200 && response.body.code === 0) {
+        client.global.set("admin_token", response.body.data.token);
+    }
+%}
+
+### 1. 注册账号 (管理员创建医生A)
+POST http://localhost:8080/api/v1/account/create
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "username": "doctorWang",
+  "password": "mySecurePassword123",
+  "job_number": "100009",
+  "role": "doctor"
+}
+
+### 2. 注册账号 (管理员创建医生B)
+POST http://localhost:8080/api/v1/account/create
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "username": "doctor_b",
+  "password": "mySecurePassword123",
+  "job_number": "100002",
+  "role": "doctor"
+}
+
+### 3. 登录并获取医生A的 Token
+POST http://localhost:8080/api/v1/account/login
+Content-Type: application/json
+
+{
+  "username": "doctor_a",
+  "password": "mySecurePassword123"
+}
+
+> {%
+    if (response.status === 200 && response.body.code === 0) {
+        client.global.set("auth_token_a", response.body.data.token);
+    }
+%}
+
+### 4. 登录并获取医生B的 Token
+POST http://localhost:8080/api/v1/account/login
+Content-Type: application/json
+
+{
+  "username": "doctor_b",
+  "password": "mySecurePassword123"
+}
+
+> {%
+    if (response.status === 200 && response.body.code === 0) {
+        client.global.set("auth_token_b", response.body.data.token);
+    }
+%}
+
+
+### 5. 医生A创建病例 (注意下划线格式符合 DTO 需要)
+POST http://localhost:8080/api/v1/cases/create
+Content-Type: application/json
+Authorization: Bearer {{auth_token_a}}
+
+{
+  "name": "医生A的病人",
+  "gender": 1,
+  "age": 30,
+  "id_number": "110105198001011234",
+  "contact": "13800138000",
+  "medical_history": "感冒",
+  "case_desc": "初诊"
+}
+
+> {%
+    if (response.status === 200 && response.body.code === 0) {
+        client.global.set("test_case_id_a", response.body.data.case_id);
+    }
+%}
+
+### 6. 医生B创建病例
+POST http://localhost:8080/api/v1/cases/create
+Content-Type: application/json
+Authorization: Bearer {{auth_token_b}}
+
+{
+  "name": "医生B的病人",
+  "gender": 0,
+  "age": 25,
+  "id_number": "220105198001011235",
+  "contact": "13900139000",
+  "medical_history": "发烧",
+  "case_desc": "复诊"
+}
+
+> {%
+    if (response.status === 200 && response.body.code === 0) {
+        client.global.set("test_case_id_b", response.body.data.case_id);
+    }
+%}
+
+
+### 7. 医生A查看所有病例（测试隔离：只应看到“医生A的病人”）
+GET http://localhost:8080/api/v1/cases/get
+Authorization: Bearer {{auth_token_a}}
+
+
+### 8. 医生B查看所有病例（测试隔离：只应看到“医生B的病人”）
+GET http://localhost:8080/api/v1/cases/get
+Authorization: Bearer {{auth_token_b}}
+
+
+### 9. (可选测试越权隔离) 半路医生A尝试越权查看医生B的具体病例
+GET http://localhost:8080/api/v1/cases/get?case_id={{test_case_id_b}}
+Authorization: Bearer {{auth_token_a}}
+
+
+### 10. 为医生A的病例创建一次“医学检查单 (Study)”
+POST http://localhost:8080/api/v1/cases/{{test_case_id_a}}/study/create
+Content-Type: application/json
+Authorization: Bearer {{auth_token_a}}
+
+{
+  "studys": [
+    {
+      "study_time": "2026-03-18",
+      "study_type": "XRAY",
+      "study_desc": "胸部常规X光扫描"
+    }
+  ]
+}
+
+> {%
+    if (response.status === 200 && response.body.code === 0) {
+        if (response.body.data.study && response.body.data.study.length > 0) {
+            client.global.set("test_study_id_a", response.body.data.study[0].studyId);
+        }
+    }
+%}
+
+
+### 11. 稍等或者暂时跳过此假意见插入步骤 (原有的 /api/v1/infer_result/add API不存在)
+# 这一步之前仅仅是我想象的为您插入一段假诊断数据的模拟，但由于您的系统中获取的是AI真实推理结果，并没有这个单纯供写入诊断结果的接口。
+# 如果想测试诊断，可以留待上传真实图片后在业务上由您的后台自动生或者去调用 `/api/v1/image/infer/{image_id}` 。
+# POST http://localhost:8080/api/v1/infer_result/add ...
+
+
+### 12. 更新刚才医生A创建的病例信息
+POST http://localhost:8080/api/v1/cases/{{test_case_id_a}}/update
+Content-Type: application/json
+Authorization: Bearer {{auth_token_a}}
+
+{
+  "age": 46,
+  "caseDesc": "常规体检，已出部分结果"
+}
+
+
+### 13. 获取指定单个病例的详细信息 (验证刚刚的更新)
+GET http://localhost:8080/api/v1/cases/get?case_id={{test_case_id_a}}
+Authorization: Bearer {{auth_token_a}}
+
+
+### 14. 软删除医生A创建的检查单 (Study)
+POST http://localhost:8080/api/v1/cases/{{test_case_id_a}}/study/{{test_study_id_a}}/delete
+Authorization: Bearer {{auth_token_a}}
+
+
+### 15. 删除医生A的整个病例 (清理测试数据)
+POST http://localhost:8080/api/v1/cases/{{test_case_id_a}}/delete
+Authorization: Bearer {{auth_token_a}}
+
+### 16. 创建一个新的病例用于 AI 测试
+POST http://localhost:8080/api/v1/cases/create
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "name": "AI测试病人3",
+  "gender": 1,
+  "age": 45,
+  "id_number": "110105198001011234",
+  "contact": "13800138000",
+  "medical_history": "咳嗽一月余",
+  "case_desc": "疑似肺炎"
+}
+
+> {%
+    if (response.status === 200 && response.body.code === 0) {
+        client.global.set("ai_test_case_id", response.body.data.case_id);
+    }
+%}
+
+
+### 17. 给AI测试病例创建检查单 (Study)
+POST http://localhost:8080/api/v1/cases/{{ai_test_case_id}}/study/create
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "studys": [
+    {
+      "study_time": "2026-03-30",
+      "study_type": "XRAY",
+      "study_desc": "胸部正位X光片"
+    }
+  ]
+}
+
+> {%
+    if (response.status === 200 && response.body.code === 0) {
+        if (response.body.data.study && response.body.data.study.length > 0) {
+            client.global.set("ai_test_study_id", response.body.data.study[0].studyId);
+        }
+    }
+%}
+
+
+### 18. 上传影像到检查单
+# @name Upload Image
+# 提示: 请确保将下面 `< /Users/fireflyx/test_image.jpg` 换成你本地实际存在的医疗胸透图片路径
+POST http://localhost:8080/api/v1/cases/{{ai_test_case_id}}/study/{{ai_test_study_id}}/upload_image
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+Authorization: Bearer {{admin_token}}
+
+--WebAppBoundary
+Content-Disposition: form-data; name="images"; filename="test.png"
+Content-Type: image/png
+
+< /Users/fireflyx/test.png
+--WebAppBoundary--
+
+> {%
+    if (response.status === 200 && response.body.code === 0) {
+        // 取出上传后返回的 image_id
+        client.global.set("ai_test_image_id", response.body.data.imageIds[0]);
+    }
+%}
+
+
+### 20. 查询当前系统中所有的病例 (软删前)
+GET http://localhost:8080/api/v1/cases/get
+Authorization: Bearer {{admin_token}}
+
+> {%
+    if (response.status === 200 && response.body.code === 0) {
+        var cases = response.body.data;
+        client.log("当前病例总数：" + cases.length);
+        if (cases.length > 0) {
+            // 记住最新的一条数据的ID用来测试软删除
+            client.log("即将被删除的 Case ID: " + cases[cases.length - 1].caseId);
+            client.global.set("test_delete_case_id", cases[cases.length - 1].caseId);
+        }
+    }
+%}
+
+### 21. 执行病例软删除 (会级联隐藏它下面的 Study 和 Image)
+POST http://localhost:8080/api/v1/cases/{{test_delete_case_id}}/delete
+Authorization: Bearer {{admin_token}}
+
+
+### 22. 再次查询系统中所有的病例 (验证是否消失)
+GET http://localhost:8080/api/v1/cases/get
+Authorization: Bearer {{admin_token}}
+
+> {%
+    if(response.status === 200) {
+        client.test("验证刚刚删除的数据是否已经隐藏", function() {
+            var cases = response.body.data;
+            var isGone = true;
+            for(var i = 0; i < cases.length; i++){
+                if(cases[i].caseId === client.global.get("test_delete_case_id")){
+                    isGone = false;
+                }
+            }
+            client.assert(isGone, "出Bug了：数据没有从列表中隐藏！");
+            client.log("✅ 验证通过！数据已在API层面隐藏，但数据库依然保留了它的尸骨 (is_deleted = 1)。");
+        });
+    }
+%}
+
+
+### 23. 一键软删除：把数据库里目前能查到的所有 Case、Study、Image 统统设为 is_deleted = 1
+POST http://localhost:8080/api/v1/cases/dev/clear_all
+Authorization: Bearer {{admin_token}}
+
+> {%
+    if(response.status === 200) {
+        client.log("🧹 世界清静了，所有在管病例都已被标记为软删除（列表不再可见）！");
+    }
+%}
+
+
+
+
+### 24. 批量发起 AI 影像推理请求
+# 传入刚才上传后得到的 image_ids，目前填 1, 2 作为演示，请根据实际情况替换（对应数据库中的 ID）
+POST http://localhost:8080/api/v1/infer/batch
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+  "imageIds": ["IMGCDB5B513A5","IMGF103FFF9C8","IMG98BD76A597"],
+  "model": "yolo-v8",
+  "parameter": {
+    "threshold": 0.5
+  }
+}
+
+> {%
+    if(response.status === 200 && response.body.code === 0) {
+        client.global.set("test_batch_id", response.body.data.batchId);
+        client.log("✅ 批量推理发起成功，Batch ID: " + response.body.data.batchId);
+    }
+%}
+
+
+### 25. 轮询查看批量推理进度
+# 使用刚刚得到的 test_batch_id 来查询处理情况
+GET http://localhost:8080/api/v1/infer/batch/{{test_batch_id}}/status
+Authorization: Bearer {{admin_token}}
+
+> {%
+    if(response.status === 200 && response.body.code === 0) {
+        client.log("✅ 批量进度: " + response.body.data.progress.completed + "/" + response.body.data.progress.total);
+        client.log("  总体状态: " + response.body.data.overallStatus);
+    }
+%}
+
+
+### 26. 管理员获取系统操作审计日志 (Audit Logs)
+# 获取刚刚进行的上传、删除或者批量推理的操作记录
+POST http://localhost:8080/api/v1/log/get
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+  "page_no": 1,
+  "page_size": 20
+}
+
+> {%
+    if(response.status === 200 && response.body.code === 0) {
+        client.assert(response.body.data.records !== undefined, "必须返回 records 列表");
+        client.log("✅ 日志查询成功，获取到 " + response.body.data.records.length + " 条操作日志。");
+    }
+%}
+
+### 27. 条件查询系统操作审计日志 (带过滤)
+# 测试查询某个特定的 action，比如 infer_image
+POST http://localhost:8080/api/v1/log/get
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+  "operation_type": "infer_image",
+  "page_no": 1,
+  "page_size": 10
+}
+
+> {%
+    if(response.status === 200 && response.body.code === 0) {
+        client.log("✅ 带条件过滤日志查询成功！");
+    }
+%}
+
+
+
+### 28. 获取所有图片的推理结果
+# 这里可以查看到刚才批量推理生成的 bbox, 诊断标签和置信度
+GET http://localhost:8080/api/v1/infer_result/get
+Authorization: Bearer {{admin_token}}
+
+> {%
+    if(response.status === 200 && response.body.code === 0) {
+        client.log("✅ 成功获取AI推理结果，总计数量: " + response.body.data.length);
+    }
+%}
+
+
+### 29. 获取指定批次的批量推理结果
+# 只获取在上面批量推理步骤中发起的任务列表的推理结果
+GET http://localhost:8080/api/v1/infer/batch/{{test_batch_id}}/result
+Authorization: Bearer {{admin_token}}
+
+> {%
+    if(response.status === 200 && response.body.code === 0) {
+        client.log("✅ 成功获取批次推理结果，总计返回数据数量: " + response.body.data.length);
+        if (response.body.data.length > 0) {
+            client.global.set("test_result_id", response.body.data[0].resultId);
+            client.log("抽取第一条推理结果 ID 用于测试画框修改: " + response.body.data[0].resultId);
+        }
+    }
+%}
+
+
+
+### 30. 医生在前端修改了画框坐标，提交覆盖
+# 说明: 把 test_result_id 替换成真正存在的 InferenceResult ID (例如 'RES12345678')
+POST http://localhost:8080/api/v1/infer_result/RES5FB28900F9/doc_bbox/update
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+  "doc_bbox": [
+    {
+      "x1": 19.9087,
+      "y1": 116.3975,
+      "x2": 150.0,
+      "y2": 250.0
+    }
+  ]
+}
+
+> {%
+    client.test("修改检测框成功", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body.data === "success", "Response status is not success");
+    });
+%}
+
+### 31. 第二次修改：医生再次调整框或完全清空（取消评价）
+# 传入 doc_bbox 设为空即可实现取消评价
+POST http://localhost:8080/api/v1/infer_result/RES5FB28900F9/doc_bbox/update
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+  "doc_bbox": null
+}
+
+> {%
+    client.test("清空/取消修改检测框成功", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+### 32. 医生修改框之后重新获取单条结果详情 (查看 isModified 字段和 modifiedBbox 是否被正确覆盖)
+POST http://localhost:8080/api/v1/infer_result/get/RES5FB28900F9
+Authorization: Bearer {{admin_token}}
+
+### 33. 上传一个新的 AI 模型 (动态模型工厂)
+POST http://localhost:8080/api/v1/model/upload
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+Authorization: Bearer {{admin_token}}
+
+--WebAppBoundary
+Content-Disposition: form-data; name="model_name"
+
+肺炎检测YOLO
+--WebAppBoundary
+Content-Disposition: form-data; name="model_version"
+
+v1.0
+--WebAppBoundary
+Content-Disposition: form-data; name="algorithm_type"
+
+yolov8
+--WebAppBoundary
+Content-Disposition: form-data; name="description"
+
+动态YOLOv8架构通用模型
+--WebAppBoundary
+Content-Disposition: form-data; name="default_threshold"
+
+0.5
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="test_yolo_model.pt"
+Content-Type: application/octet-stream
+
+< /Users/fireflyx/test.png
+--WebAppBoundary--
+
+> {%
+    if (response.status === 200 && response.body.code === 0) {
+        client.global.set("ai_dynamic_model_id", response.body.data.id);
+        client.log("✅ 模型上传成功，获得的ID：" + response.body.data.id);
+    }
+%}
+
+
+### 34. 获取所有可用的 AI 模型列表
+GET http://localhost:8080/api/v1/model/list
+Authorization: Bearer {{admin_token}}
+
+
+### 35. 触发 AI 影像推理 (使用刚才上传的新动态模型)
+# 注意：此处的 model 必须是步骤 19 返回的 ID
+POST http://localhost:8080/api/v1/image/infer/{{ai_test_image_id}}
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+  "model": "2",
+  "parameter": {
+    "threshold": 0.05,
+    "target": "chest"
+  }
+}
+
+
+
+### 35. 批量发起图片推理 (测试动态模型架构 - Model 1 = 肺炎Faster RCNN)
+POST http://localhost:8080/api/v1/infer/batch
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "imageIds": ["IMG06EE7EC334", "IMG46D3495319"],
+  "model": "2",
+  "parameter": {
+    "threshold": 0.05
+  }
+}
+
+> {%
+    if (response.status === 200 && response.body.code === 0) {
+        client.global.set("batch_id", response.body.data.batchId);
+    }
+%}
+
+### 36. 查询批量推理任务的状态
+GET http://localhost:8080/api/v1/infer/batch/{{batch_id}}/status
+Authorization: Bearer {{admin_token}}
+
+### 37. 获取批量推理的最终结果单
+GET http://localhost:8080/api/v1/infer/batch/{{batch_id}}/result
+Authorization: Bearer {{admin_token}}
+
+### 38. 发布系统公告 (仅限系统管理员)
+POST http://localhost:8080/api/v1/announcement/update
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "title": "v1.2 版本更新公告",
+  "content": "各位医生：系统已全新上线多模型动态并行推理架构。现在同时支持 Faster R-CNN 和 YOLOv8 模型的无缝切换，并支持批量挂机诊断！"
+}
+
+### 39. 获取最新系统公告 (前端页面展示查询)
+GET http://localhost:8080/api/v1/announcement/latest
+
+### 40. 获取系统中所有的模型 (包括停用的)
+GET http://localhost:8080/api/v1/model/all
+Authorization: Bearer {{admin_token}}
+
+### 41. 停用模型 2 (仅限管理员)
+POST http://localhost:8080/api/v1/model/2/status?status=INACTIVE
+Authorization: Bearer {{admin_token}}
+

@@ -1,0 +1,11 @@
+.DS_Store
+*.class
+*.log
+*.jar
+*.war
+.idea/
+.vscode/
+target/
+build/
+.gradle/
+*.pth

@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>登录 - 医疗影像AI分析平台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* Morandi色系配色 */
+    :root {
+      --morandi-sage: #7B9EA8;
+      --morandi-dusty-rose: #B8A398;
+      --morandi-soft-blue: #8FA5B8;
+      --morandi-warm-gray: #A8A39D;
+      --morandi-muted-green: #8FA89D;
+      --morandi-light-bg: #F5F3F0;
+      --morandi-text: #4A4A48;
+      --morandi-text-light: #8B8580;
+    }
+
+    .gradient-bg {
+      background: linear-gradient(135deg, #D8E3E7 0%, #C5D5DB 50%, #B8CDD5 100%);
+      position: relative;
+    }
+
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .input-focus:focus {
+      border-color: var(--morandi-soft-blue);
+      box-shadow: 0 0 0 3px rgba(143, 165, 184, 0.15), inset 0 1px 3px rgba(143, 165, 184, 0.1);
+      outline: none;
+      animation: breathe 2s ease-in-out infinite;
+    }
+
+    @keyframes breathe {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(143, 165, 184, 0.15), inset 0 1px 3px rgba(143, 165, 184, 0.1); }
+      50% { box-shadow: 0 0 0 3px rgba(143, 165, 184, 0.25), inset 0 1px 3px rgba(143, 165, 184, 0.15); }
+    }
+
+    .floating-shape {
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0.08;
+      animation: float 25s infinite ease-in-out;
+      filter: blur(40px);
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(50px, -40px) scale(1.1); }
+      66% { transform: translate(-30px, 30px) scale(0.9); }
+    }
+
+    .shape-1 {
+      width: 400px;
+      height: 400px;
+      background: #8FA5B8;
+      top: -150px;
+      right: -100px;
+      animation-delay: 0s;
+    }
+
+    .shape-2 {
+      width: 350px;
+      height: 350px;
+      background: #7B9EA8;
+      bottom: -100px;
+      left: -80px;
+      animation-delay: 8s;
+    }
+
+    .shape-3 {
+      width: 250px;
+      height: 250px;
+      background: #A8C5D1;
+      top: 40%;
+      left: 15%;
+      animation-delay: 15s;
+    }
+
+    .role-btn {
+      transition: all 0.3s ease;
+      border: 2px solid #C5D5DB;
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    .role-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      background: rgba(255, 255, 255, 0.8);
+      border-color: #8FA5B8;
+    }
+
+    .role-btn.selected {
+      border-color: var(--morandi-soft-blue);
+      border-width: 2.5px;
+      background: linear-gradient(135deg, rgba(143, 165, 184, 0.2) 0%, rgba(123, 158, 168, 0.15) 100%);
+      box-shadow: 0 4px 12px rgba(143, 165, 184, 0.2);
+    }
+
+    .role-btn.selected .role-icon {
+      background: var(--morandi-soft-blue);
+      color: white !important;
+      padding: 8px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .role-btn .role-text {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--morandi-text);
+    }
+
+    .role-btn.selected .role-text {
+      font-weight: 700;
+      color: var(--morandi-soft-blue);
+    }
+
+    .login-btn {
+      background: linear-gradient(135deg, #8FA5B8 0%, #7B9EA8 100%);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .login-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .login-btn:hover::before {
+      left: 100%;
+    }
+
+    .login-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(143, 165, 184, 0.4);
+    }
+
+    .login-btn:active {
+      transform: translateY(0);
+    }
+
+    .login-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+  </style>
+</head>
+
+<body class="gradient-bg min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+  <!-- 浮动装饰元素 -->
+  <div class="floating-shape shape-1"></div>
+  <div class="floating-shape shape-2"></div>
+  <div class="floating-shape shape-3"></div>
+
+  <!-- 登录卡片 -->
+  <div class="glass-effect rounded-3xl shadow-2xl w-full max-w-md p-8 relative z-10">
+    <!-- Logo和标题 -->
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4" style="background: linear-gradient(135deg, var(--morandi-soft-blue) 0%, var(--morandi-sage) 100%);">
+        <span class="iconify text-white text-3xl" data-icon="solar:atom-bold"></span>
+      </div>
+      <h1 class="text-2xl font-bold mb-2" style="color: var(--morandi-text);">MediVision AI</h1>
+      <p class="text-sm" style="color: var(--morandi-text-light);">医疗影像AI分析平台</p>
+    </div>
+
+    <!-- 身份选择 -->
+    <div class="mb-6">
+      <label class="block text-sm font-medium mb-3" style="color: var(--morandi-text);">选择身份</label>
+      <div class="grid grid-cols-3 gap-3">
+        <button type="button" class="role-btn p-4 rounded-xl text-center transition-all" data-role="admin" onclick="selectRole('admin')">
+          <p class="role-text">管理员</p>
+        </button>
+        <button type="button" class="role-btn p-4 rounded-xl text-center transition-all" data-role="doctor" onclick="selectRole('doctor')">
+          <p class="role-text">医生</p>
+        </button>
+        <button type="button" class="role-btn p-4 rounded-xl text-center transition-all" data-role="researcher" onclick="selectRole('researcher')">
+          <p class="role-text">研究员</p>
+        </button>
+      </div>
+    </div>
+
+    <!-- 登录表单 -->
+    <form id="loginForm" class="space-y-5">
+      <!-- 用户名输入 -->
+      <div>
+        <label class="block text-sm font-medium mb-2" style="color: var(--morandi-text);">用户名</label>
+        <div class="relative">
+          <span class="iconify absolute left-3 top-1/2 -translate-y-1/2 text-xl" style="color: var(--morandi-text);" data-icon="solar:user-bold"></span>
+          <input
+            type="text"
+            id="username"
+            class="input-focus w-full pl-11 pr-4 py-3 rounded-xl text-sm transition-all"
+            style="border: 1.5px solid #C5D5DB; color: var(--morandi-text);"
+            placeholder="请输入用户名"
+            required
+          >
+        </div>
+      </div>
+
+      <!-- 密码输入 -->
+      <div>
+        <label class="block text-sm font-medium mb-2" style="color: var(--morandi-text);">密码</label>
+        <div class="relative">
+          <span class="iconify absolute left-3 top-1/2 -translate-y-1/2 text-xl" style="color: var(--morandi-text);" data-icon="solar:lock-password-bold"></span>
+          <input
+            type="password"
+            id="password"
+            class="input-focus w-full pl-11 pr-12 py-3 rounded-xl text-sm transition-all"
+            style="border: 1.5px solid #C5D5DB; color: var(--morandi-text);"
+            placeholder="请输入密码"
+            required
+          >
+          <button type="button" onclick="togglePassword()" class="absolute right-3 top-1/2 -translate-y-1/2 transition-colors" style="color: var(--morandi-text-light);">
+            <span id="eyeIcon" class="iconify text-xl" data-icon="solar:eye-bold"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 记住我 -->
+      <div class="flex items-center justify-between text-sm">
+        <label class="flex items-center cursor-pointer">
+          <input type="checkbox" class="w-4 h-4 rounded cursor-pointer" style="accent-color: var(--morandi-sage);">
+          <span class="ml-2" style="color: var(--morandi-text-light);">记住我</span>
+        </label>
+        <a href="#" class="font-medium transition-colors" style="color: var(--morandi-soft-blue);">忘记密码？</a>
+      </div>
+
+      <!-- 登录按钮 -->
+      <div class="px-4">
+        <button
+          type="submit"
+          class="login-btn w-full text-white font-semibold py-3 rounded-xl shadow-lg"
+        >
+          登录
+        </button>
+      </div>
+    </form>
+
+    <!-- 底部信息 -->
+    <div class="text-center mt-6 pt-6 border-t" style="border-color: #D8E3E7;">
+      <p class="text-xs" style="color: var(--morandi-text-light);">
+        登录即表示您同意我们的
+        <a href="#" class="transition-colors" style="color: var(--morandi-soft-blue);">服务条款</a>
+        和
+        <a href="#" class="transition-colors" style="color: var(--morandi-soft-blue);">隐私政策</a>
+      </p>
+    </div>
+  </div>
+
+  <script>
+    let selectedRole = null;
+
+    // 选择身份
+    function selectRole(role) {
+      selectedRole = role;
+
+      // 移除所有选中状态
+      document.querySelectorAll('.role-btn').forEach(btn => {
+        btn.classList.remove('selected');
+      });
+
+      // 添加选中状态
+      document.querySelector(`[data-role="${role}"]`).classList.add('selected');
+    }
+
+    // 切换密码可见性
+    function togglePassword() {
+      const passwordInput = document.getElementById('password');
+      const eyeIcon = document.getElementById('eyeIcon');
+
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        eyeIcon.setAttribute('data-icon', 'solar:eye-closed-bold');
+      } else {
+        passwordInput.type = 'password';
+        eyeIcon.setAttribute('data-icon', 'solar:eye-bold');
+      }
+    }
+
+    // 处理登录表单提交
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+
+      // 检查是否选择了身份
+      if (!selectedRole) {
+        alert('请先选择您的身份');
+        return;
+      }
+
+      // 验证用户名和密码
+      if (username && password) {
+        // 显示加载状态
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = '登录中...';
+        submitBtn.disabled = true;
+
+        // 模拟登录请求
+        setTimeout(() => {
+          // 根据身份跳转到不同平台
+          const rolePages = {
+            'admin': 'admin.html',
+            'doctor': 'doctor.html',
+            'researcher': 'researcher.html'
+          };
+
+          const targetPage = rolePages[selectedRole];
+          if (targetPage) {
+            window.location.href = targetPage;
+          } else {
+            alert('页面跳转失败');
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+          }
+        }, 1000);
+      }
+    });
+
+    // 回车键提交表单
+    document.getElementById('password').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+      }
+    });
+  </script>
+</body>
+</html>

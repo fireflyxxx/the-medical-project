@@ -1,0 +1,1843 @@
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>医疗影像AI分析平台 - 科研端</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700&display=swap');
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f7f5fb;
+    }
+
+    .tech-purple {
+      color: #722ED1;
+    }
+
+    .bg-tech-purple {
+      background-color: #722ED1;
+    }
+
+    .sidebar-item:hover {
+      background: rgba(114, 46, 209, 0.08);
+      color: #722ED1;
+    }
+  </style>
+</head>
+
+<body class="flex h-screen overflow-hidden">
+  <!-- 侧边导航 -->
+  <aside class="w-64 bg-white border-r flex flex-col items-stretch">
+    <div class="h-16 flex items-center px-6 space-x-2 border-b">
+      <span class="iconify text-3xl tech-purple" data-icon="solar:atom-bold"></span>
+      <span class="text-xl font-bold tracking-tight">V-Lab AI</span>
+    </div>
+    <div class="flex-1 p-4 space-y-2 mt-4">
+      <div class="text-[10px] font-bold text-slate-400 px-2 mb-2 uppercase tracking-widest">基础工作区</div>
+      <a class="sidebar-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-600 transition-all bg-purple-50 tech-purple" href="#" onclick="showTrainingOverview(); return false;">
+        <span class="iconify text-xl" data-icon="solar:chart-2-bold"></span>
+        <span class="font-medium">统计报表</span>
+      </a>
+      <a class="sidebar-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-600 transition-all" href="#" onclick="showDatasetSamples(); return false;">
+        <span class="iconify text-xl" data-icon="solar:clipboard-list-bold"></span>
+        <span class="font-medium">影像数据审查</span>
+      </a>
+      <a class="sidebar-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-600 transition-all" href="#" onclick="showModelLibrary(); return false;">
+        <span class="iconify text-xl" data-icon="solar:box-bold"></span>
+        <span class="font-medium">模型库</span>
+      </a>
+      <a class="sidebar-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-600 transition-all" href="#" onclick="showModelConfig(); return false;">
+        <span class="iconify text-xl" data-icon="solar:settings-minimalistic-bold"></span>
+        <span class="font-medium">AI模型配置</span>
+      </a>
+    </div>
+    <!-- 用户信息区域 -->
+    <div class="p-4 bg-gradient-to-br from-slate-50 to-purple-50/30 border-t">
+      <div class="flex items-center space-x-3 mb-3 px-2">
+        <img alt="Researcher profile" class="w-10 h-10 rounded-full border-2 border-[#722ED1] shadow-sm" src="https://modao.cc/agent-py/media/generated_images/2026-03-12/0f81754d5f604e319cd2e96b87479194.jpg">
+        <div>
+          <p class="text-sm font-bold text-slate-700">李明 博士</p>
+          <p class="text-xs text-[#722ED1]">AI研究员</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-3 px-2">
+        <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-sm"></div>
+        <span class="text-xs text-slate-500">在线 | 今日: 8个模型</span>
+      </div>
+    </div>
+  </aside>
+  <!-- 主体区域 -->
+  <main class="flex-1 flex flex-col overflow-y-auto">
+    <header class="h-16 bg-white border-b flex items-center justify-between px-8 shrink-0">
+      <div class="flex items-center space-x-4">
+        <h2 class="text-lg font-bold text-slate-800">当前部署模型: 肺炎病灶智能定位模型 v2.0.5</h2>
+        <span class="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-widest">生产环境</span>
+      </div>
+    </header>
+    <!-- 训练概览内容 -->
+    <div id="trainingOverview" class="p-8 space-y-8">
+      <!-- 生产环境性能指标 -->
+      <div class="grid grid-cols-4 gap-6">
+        <div class="bg-white p-6 rounded-2xl border border-purple-100 shadow-sm">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-1">模型准确率</p>
+          <div class="flex items-end space-x-2">
+            <span class="text-3xl font-bold font-mono text-slate-800">97.8%</span>
+            <span class="text-green-500 text-xs font-bold pb-1">↑ 0.5%</span>
+          </div>
+          <p class="text-[10px] text-slate-500 mt-2">近30天平均</p>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border border-green-100 shadow-sm">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-1">医生同意率</p>
+          <div class="flex items-end space-x-2">
+            <span class="text-3xl font-bold font-mono text-green-600">90.8%</span>
+            <span class="text-green-500 text-xs font-bold pb-1">↑ 2.1%</span>
+          </div>
+          <p class="text-[10px] text-slate-500 mt-2">1,089/1,200 案例</p>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border border-red-100 shadow-sm">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-1">误诊率</p>
+          <div class="flex items-end space-x-2">
+            <span class="text-3xl font-bold font-mono text-red-600">2.0%</span>
+            <span class="text-green-500 text-xs font-bold pb-1">↓ 0.3%</span>
+          </div>
+          <p class="text-[10px] text-slate-500 mt-2">24例误诊</p>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border border-purple-100 shadow-sm">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-1">累计诊断案例</p>
+          <div class="flex items-end space-x-2">
+            <span class="text-3xl font-bold font-mono text-slate-800">12,408</span>
+            <span class="text-purple-400 text-xs font-bold pb-1">+1,200</span>
+          </div>
+          <p class="text-[10px] text-slate-500 mt-2">本月新增</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-12 gap-6">
+        <!-- 模型性能趋势图 -->
+        <div class="col-span-8 bg-white p-6 rounded-2xl border border-purple-100 shadow-sm">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="font-bold flex items-center">
+              <span class="iconify mr-2 tech-purple" data-icon="solar:graph-bold"></span>
+              模型性能趋势 (近30天)
+            </h3>
+            <div class="flex space-x-2">
+              <button class="bg-purple-100 text-[#722ED1] text-[10px] px-2 py-1 border border-purple-200 rounded">准确率</button>
+              <button class="bg-slate-50 text-[10px] px-2 py-1 border rounded hover:bg-slate-100">同意率</button>
+            </div>
+          </div>
+          <div class="h-80 w-full" id="performanceChart"></div>
+        </div>
+        <!-- 医生反馈分布 -->
+        <div class="col-span-4 bg-white p-6 rounded-2xl border border-purple-100 shadow-sm">
+          <h3 class="font-bold mb-6 flex items-center">
+            <span class="iconify mr-2 tech-purple" data-icon="solar:pie-chart-bold"></span>
+            医生反馈分布
+          </h3>
+          <div class="h-56" id="feedbackPie"></div>
+          <div class="mt-4 space-y-3">
+            <div class="flex items-center justify-between text-xs">
+              <div class="flex items-center space-x-2">
+                <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                <span class="text-slate-600">同意</span>
+              </div>
+              <span class="font-bold">90.8%</span>
+            </div>
+            <div class="flex items-center justify-between text-xs">
+              <div class="flex items-center space-x-2">
+                <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                <span class="text-slate-600">需复核</span>
+              </div>
+              <span class="font-bold">7.3%</span>
+            </div>
+            <div class="flex items-center justify-between text-xs">
+              <div class="flex items-center space-x-2">
+                <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                <span class="text-slate-600">不同意</span>
+              </div>
+              <span class="font-bold">2.0%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 样本明细反馈界面 -->
+    <div id="datasetSamples" class="p-8 space-y-6 hidden">
+      <!-- 页面标题和统计 -->
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-2xl font-bold text-slate-800 flex items-center">
+            <span class="iconify mr-3 tech-purple text-3xl" data-icon="solar:clipboard-list-bold"></span>
+            数据集样本明细 - 验证集反馈
+          </h3>
+          <p class="text-sm text-slate-500 mt-1">查看AI预测结果与医生标注的对比分析</p>
+        </div>
+        <div class="flex space-x-3">
+          <input type="date" class="text-sm border rounded-lg px-4 py-2 bg-white outline-none">
+          <span class="flex items-center text-slate-500">至</span>
+          <input type="date" class="text-sm border rounded-lg px-4 py-2 bg-white outline-none">
+          <button class="text-sm bg-[#722ED1] hover:bg-[#591ba3] text-white px-4 py-2 rounded-lg transition-all flex items-center">
+            <span class="iconify mr-2" data-icon="solar:download-bold"></span>导出报告
+          </button>
+        </div>
+      </div>
+
+      <!-- 快速统计卡片 -->
+      <div class="flex items-center justify-between">
+        <div class="grid grid-cols-5 gap-4 flex-1">
+          <div class="bg-white p-4 rounded-xl border border-purple-100 shadow-sm">
+            <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-1">总样本数</p>
+            <p class="text-2xl font-bold font-mono text-slate-800">1,200</p>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-green-100 shadow-sm">
+            <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-1">医生同意</p>
+            <p class="text-2xl font-bold font-mono text-green-600">1,089</p>
+            <p class="text-xs text-slate-500 mt-1">90.8%</p>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-yellow-100 shadow-sm">
+            <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-1">需复核</p>
+            <p class="text-2xl font-bold font-mono text-yellow-600">87</p>
+            <p class="text-xs text-slate-500 mt-1">7.3%</p>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-red-100 shadow-sm">
+            <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-1">不同意</p>
+            <p class="text-2xl font-bold font-mono text-red-600">24</p>
+            <p class="text-xs text-slate-500 mt-1">2.0%</p>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-purple-100 shadow-sm">
+            <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-1">平均置信度</p>
+            <p class="text-2xl font-bold font-mono text-purple-600">0.91</p>
+          </div>
+        </div>
+        <!-- 视图切换按钮 -->
+        <div class="flex border rounded-lg overflow-hidden bg-white ml-4">
+          <button id="tableViewBtn" onclick="switchToTableView()" class="p-4 bg-purple-100 text-purple-700 transition-all">
+            <span class="iconify text-2xl" data-icon="solar:list-bold"></span>
+          </button>
+          <button id="cardViewBtn" onclick="switchToCardView()" class="p-4 text-slate-600 hover:bg-slate-50 transition-all">
+            <span class="iconify text-2xl" data-icon="solar:gallery-bold"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 数据表格 -->
+      <div id="tableView" class="bg-white rounded-2xl border border-purple-100 shadow-sm overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 text-slate-500 text-left font-medium border-b">
+            <tr>
+              <th class="px-6 py-4">样本编号 (DICOM)</th>
+              <th class="px-6 py-4">病灶类型</th>
+              <th class="px-6 py-4">真实标注</th>
+              <th class="px-6 py-4">AI预测</th>
+              <th class="px-6 py-4">置信度</th>
+              <th class="px-6 py-4">问诊医生</th>
+              <th class="px-6 py-4">医生评价</th>
+              <th class="px-6 py-4">详细信息</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <tr class="hover:bg-slate-50">
+              <td class="px-6 py-4 font-mono text-xs">IMG_SH_4492-AX</td>
+              <td class="px-6 py-4">结节 (Nodule)</td>
+              <td class="px-6 py-4"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold">良性</span></td>
+              <td class="px-6 py-4 text-green-600 font-bold">良性</td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <div class="w-16 bg-slate-100 h-1 rounded-full">
+                    <div class="bg-green-500 h-1 w-[98%]"></div>
+                  </div>
+                  <span class="text-[10px]">0.98</span>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="text-xs">
+                  <p class="font-medium text-slate-700">初诊: 李明 主任医师</p>
+                  <p class="text-slate-500 text-[10px] mt-0.5">复诊: -</p>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold">同意</span>
+                  <span class="text-yellow-600 text-xs">★★★★★</span>
+                </div>
+                <p class="text-[10px] text-slate-500 mt-1">边界清晰，诊断准确</p>
+              </td>
+              <td class="px-6 py-4">
+                <button onclick="openHeatmapModal('IMG_SH_4492-AX', 'benign')" class="text-tech-purple hover:underline text-xs">查看详情</button>
+              </td>
+            </tr>
+            <tr class="hover:bg-slate-50">
+              <td class="px-6 py-4 font-mono text-xs">IMG_BJ_8812-SAG</td>
+              <td class="px-6 py-4">弥漫 (Diffuse)</td>
+              <td class="px-6 py-4"><span class="bg-red-100 text-red-700 px-2 py-0.5 rounded text-[10px] font-bold">恶性</span></td>
+              <td class="px-6 py-4 text-orange-600 font-bold">疑似</td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <div class="w-16 bg-slate-100 h-1 rounded-full">
+                    <div class="bg-orange-500 h-1 w-[62%]"></div>
+                  </div>
+                  <span class="text-[10px]">0.62</span>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="text-xs">
+                  <p class="font-medium text-slate-700">初诊: 王芳 副主任医师</p>
+                  <p class="text-slate-500 text-[10px] mt-0.5">复诊: 李明 主任医师</p>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <span class="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded text-[10px] font-bold">需复核</span>
+                  <span class="text-yellow-600 text-xs">★★★☆☆</span>
+                </div>
+                <p class="text-[10px] text-slate-500 mt-1">置信度偏低，建议进一步检查</p>
+              </td>
+              <td class="px-6 py-4">
+                <button onclick="openHeatmapModal('IMG_BJ_8812-SAG', 'suspicious')" class="text-tech-purple hover:underline text-xs">查看详情</button>
+              </td>
+            </tr>
+            <tr class="hover:bg-slate-50">
+              <td class="px-6 py-4 font-mono text-xs">IMG_SH_2101-COR</td>
+              <td class="px-6 py-4">囊肿 (Cyst)</td>
+              <td class="px-6 py-4"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold">良性</span></td>
+              <td class="px-6 py-4 text-green-600 font-bold">良性</td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <div class="w-16 bg-slate-100 h-1 rounded-full">
+                    <div class="bg-green-500 h-1 w-[99%]"></div>
+                  </div>
+                  <span class="text-[10px]">0.99</span>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="text-xs">
+                  <p class="font-medium text-slate-700">初诊: 张伟 主治医师</p>
+                  <p class="text-slate-500 text-[10px] mt-0.5">复诊: -</p>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold">同意</span>
+                  <span class="text-yellow-600 text-xs">★★★★☆</span>
+                </div>
+                <p class="text-[10px] text-slate-500 mt-1">典型囊肿特征</p>
+              </td>
+              <td class="px-6 py-4">
+                <button onclick="openHeatmapModal('IMG_SH_2101-COR', 'benign')" class="text-tech-purple hover:underline text-xs">查看详情</button>
+              </td>
+            </tr>
+            <tr class="hover:bg-slate-50">
+              <td class="px-6 py-4 font-mono text-xs">IMG_GZ_5523-AX</td>
+              <td class="px-6 py-4">结节 (Nodule)</td>
+              <td class="px-6 py-4"><span class="bg-red-100 text-red-700 px-2 py-0.5 rounded text-[10px] font-bold">恶性</span></td>
+              <td class="px-6 py-4 text-red-600 font-bold">恶性</td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <div class="w-16 bg-slate-100 h-1 rounded-full">
+                    <div class="bg-red-500 h-1 w-[95%]"></div>
+                  </div>
+                  <span class="text-[10px]">0.95</span>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="text-xs">
+                  <p class="font-medium text-slate-700">初诊: 李明 主任医师</p>
+                  <p class="text-slate-500 text-[10px] mt-0.5">复诊: -</p>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold">同意</span>
+                  <span class="text-yellow-600 text-xs">★★★★★</span>
+                </div>
+                <p class="text-[10px] text-slate-500 mt-1">恶性特征明显</p>
+              </td>
+              <td class="px-6 py-4">
+                <button onclick="openHeatmapModal('IMG_GZ_5523-AX', 'benign')" class="text-tech-purple hover:underline text-xs">查看详情</button>
+              </td>
+            </tr>
+            <tr class="hover:bg-slate-50">
+              <td class="px-6 py-4 font-mono text-xs">IMG_BJ_3341-SAG</td>
+              <td class="px-6 py-4">结节 (Nodule)</td>
+              <td class="px-6 py-4"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold">良性</span></td>
+              <td class="px-6 py-4 text-red-600 font-bold">恶性</td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <div class="w-16 bg-slate-100 h-1 rounded-full">
+                    <div class="bg-orange-500 h-1 w-[58%]"></div>
+                  </div>
+                  <span class="text-[10px]">0.58</span>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="text-xs">
+                  <p class="font-medium text-slate-700">初诊: 王芳 副主任医师</p>
+                  <p class="text-slate-500 text-[10px] mt-0.5">复诊: 张伟 主治医师</p>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <span class="bg-red-100 text-red-700 px-2 py-0.5 rounded text-[10px] font-bold">不同意</span>
+                  <span class="text-yellow-600 text-xs">★★☆☆☆</span>
+                </div>
+                <p class="text-[10px] text-slate-500 mt-1">误判，需重新训练</p>
+              </td>
+              <td class="px-6 py-4">
+                <button onclick="openHeatmapModal('IMG_BJ_3341-SAG', 'suspicious')" class="text-tech-purple hover:underline text-xs">查看详情</button>
+              </td>
+            </tr>
+            <tr class="hover:bg-slate-50">
+              <td class="px-6 py-4 font-mono text-xs">IMG_SH_7782-COR</td>
+              <td class="px-6 py-4">囊肿 (Cyst)</td>
+              <td class="px-6 py-4"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold">良性</span></td>
+              <td class="px-6 py-4 text-green-600 font-bold">良性</td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <div class="w-16 bg-slate-100 h-1 rounded-full">
+                    <div class="bg-green-500 h-1 w-[97%]"></div>
+                  </div>
+                  <span class="text-[10px]">0.97</span>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="text-xs">
+                  <p class="font-medium text-slate-700">初诊: 李明 主任医师</p>
+                  <p class="text-slate-500 text-[10px] mt-0.5">复诊: -</p>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold">同意</span>
+                  <span class="text-yellow-600 text-xs">★★★★☆</span>
+                </div>
+                <p class="text-[10px] text-slate-500 mt-1">标准囊肿表现</p>
+              </td>
+              <td class="px-6 py-4">
+                <button onclick="openHeatmapModal('IMG_SH_7782-COR', 'benign')" class="text-tech-purple hover:underline text-xs">查看详情</button>
+              </td>
+            </tr>
+            <tr class="hover:bg-slate-50">
+              <td class="px-6 py-4 font-mono text-xs">IMG_GZ_9012-AX</td>
+              <td class="px-6 py-4">弥漫 (Diffuse)</td>
+              <td class="px-6 py-4"><span class="bg-red-100 text-red-700 px-2 py-0.5 rounded text-[10px] font-bold">恶性</span></td>
+              <td class="px-6 py-4 text-orange-600 font-bold">疑似</td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <div class="w-16 bg-slate-100 h-1 rounded-full">
+                    <div class="bg-orange-500 h-1 w-[71%]"></div>
+                  </div>
+                  <span class="text-[10px]">0.71</span>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="text-xs">
+                  <p class="font-medium text-slate-700">初诊: 张伟 主治医师</p>
+                  <p class="text-slate-500 text-[10px] mt-0.5">复诊: 王芳 副主任医师</p>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <span class="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded text-[10px] font-bold">需复核</span>
+                  <span class="text-yellow-600 text-xs">★★★☆☆</span>
+                </div>
+                <p class="text-[10px] text-slate-500 mt-1">边界模糊，需进一步分析</p>
+              </td>
+              <td class="px-6 py-4">
+                <button onclick="openHeatmapModal('IMG_GZ_9012-AX', 'suspicious')" class="text-tech-purple hover:underline text-xs">查看详情</button>
+              </td>
+            </tr>
+            <tr class="hover:bg-slate-50">
+              <td class="px-6 py-4 font-mono text-xs">IMG_SH_4456-SAG</td>
+              <td class="px-6 py-4">结节 (Nodule)</td>
+              <td class="px-6 py-4"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold">良性</span></td>
+              <td class="px-6 py-4 text-green-600 font-bold">良性</td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <div class="w-16 bg-slate-100 h-1 rounded-full">
+                    <div class="bg-green-500 h-1 w-[96%]"></div>
+                  </div>
+                  <span class="text-[10px]">0.96</span>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="text-xs">
+                  <p class="font-medium text-slate-700">初诊: 王芳 副主任医师</p>
+                  <p class="text-slate-500 text-[10px] mt-0.5">复诊: -</p>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold">同意</span>
+                  <span class="text-yellow-600 text-xs">★★★★★</span>
+                </div>
+                <p class="text-[10px] text-slate-500 mt-1">诊断准确</p>
+              </td>
+              <td class="px-6 py-4">
+                <button onclick="openHeatmapModal('IMG_SH_4456-SAG', 'benign')" class="text-tech-purple hover:underline text-xs">查看详情</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="p-4 bg-slate-50 flex items-center justify-between">
+          <span class="text-xs text-slate-500">显示第 1-8 条，共 1,200 条验证记录</span>
+          <div class="flex space-x-2">
+            <button class="p-1 px-3 border rounded bg-white text-xs hover:bg-slate-50 disabled:opacity-50">上一页</button>
+            <button class="p-1 px-3 border rounded bg-white text-xs hover:bg-slate-50">下一页</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 卡片流视图 -->
+      <div id="cardView" class="hidden grid grid-cols-6 gap-4">
+        <!-- 卡片 1 -->
+        <div class="bg-white rounded-lg border border-purple-100 shadow-sm overflow-hidden hover:shadow-lg transition-all">
+          <div class="aspect-square bg-slate-100 relative">
+            <img src="https://picsum.photos/400/400?random=1" alt="IMG_SH_4492-AX" class="w-full h-full object-cover">
+            <div class="absolute top-1.5 right-1.5">
+              <span class="bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-[10px] font-bold">同意</span>
+            </div>
+          </div>
+          <div class="p-3 space-y-1.5">
+            <p class="font-mono text-[10px] text-slate-500">IMG_SH_4492-AX</p>
+            <p class="text-xs font-medium text-slate-800">结节 (Nodule)</p>
+            <div class="flex items-center justify-between text-[10px]">
+              <span class="text-slate-500">AI预测:</span>
+              <span class="text-green-600 font-bold">良性</span>
+            </div>
+            <div class="flex items-center justify-between text-[10px]">
+              <span class="text-slate-500">置信度:</span>
+              <span class="font-mono font-bold">0.98</span>
+            </div>
+            <div class="pt-1.5 border-t">
+              <p class="text-[10px] text-slate-600">李明 主任医师</p>
+              <p class="text-[10px] text-yellow-600 mt-0.5">★★★★★</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 卡片 2 -->
+        <div class="bg-white rounded-lg border border-purple-100 shadow-sm overflow-hidden hover:shadow-lg transition-all">
+          <div class="aspect-square bg-slate-100 relative">
+            <img src="https://picsum.photos/400/400?random=2" alt="IMG_BJ_8812-SAG" class="w-full h-full object-cover">
+            <div class="absolute top-1.5 right-1.5">
+              <span class="bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded text-[10px] font-bold">需复核</span>
+            </div>
+          </div>
+          <div class="p-3 space-y-1.5">
+            <p class="font-mono text-[10px] text-slate-500">IMG_BJ_8812-SAG</p>
+            <p class="text-xs font-medium text-slate-800">弥漫 (Diffuse)</p>
+            <div class="flex items-center justify-between text-[10px]">
+              <span class="text-slate-500">AI预测:</span>
+              <span class="text-orange-600 font-bold">疑似</span>
+            </div>
+            <div class="flex items-center justify-between text-[10px]">
+              <span class="text-slate-500">置信度:</span>
+              <span class="font-mono font-bold">0.62</span>
+            </div>
+            <div class="pt-1.5 border-t">
+              <p class="text-[10px] text-slate-600">王芳 副主任医师</p>
+              <p class="text-[10px] text-yellow-600 mt-0.5">★★★☆☆</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 卡片 3 -->
+        <div class="bg-white rounded-lg border border-purple-100 shadow-sm overflow-hidden hover:shadow-lg transition-all">
+          <div class="aspect-square bg-slate-100 relative">
+            <img src="https://picsum.photos/400/400?random=3" alt="IMG_SH_2101-COR" class="w-full h-full object-cover">
+            <div class="absolute top-1.5 right-1.5">
+              <span class="bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-[10px] font-bold">同意</span>
+            </div>
+          </div>
+          <div class="p-3 space-y-1.5">
+            <p class="font-mono text-[10px] text-slate-500">IMG_SH_2101-COR</p>
+            <p class="text-xs font-medium text-slate-800">囊肿 (Cyst)</p>
+            <div class="flex items-center justify-between text-[10px]">
+              <span class="text-slate-500">AI预测:</span>
+              <span class="text-green-600 font-bold">良性</span>
+            </div>
+            <div class="flex items-center justify-between text-[10px]">
+              <span class="text-slate-500">置信度:</span>
+              <span class="font-mono font-bold">0.99</span>
+            </div>
+            <div class="pt-1.5 border-t">
+              <p class="text-[10px] text-slate-600">张伟 主治医师</p>
+              <p class="text-[10px] text-yellow-600 mt-0.5">★★★★☆</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 卡片 4 -->
+        <div class="bg-white rounded-lg border border-purple-100 shadow-sm overflow-hidden hover:shadow-lg transition-all">
+          <div class="aspect-square bg-slate-100 relative">
+            <img src="https://picsum.photos/400/400?random=4" alt="IMG_GZ_5523-AX" class="w-full h-full object-cover">
+            <div class="absolute top-1.5 right-1.5">
+              <span class="bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-[10px] font-bold">同意</span>
+            </div>
+          </div>
+          <div class="p-3 space-y-1.5">
+            <p class="font-mono text-[10px] text-slate-500">IMG_GZ_5523-AX</p>
+            <p class="text-xs font-medium text-slate-800">结节 (Nodule)</p>
+            <div class="flex items-center justify-between text-[10px]">
+              <span class="text-slate-500">AI预测:</span>
+              <span class="text-red-600 font-bold">恶性</span>
+            </div>
+            <div class="flex items-center justify-between text-[10px]">
+              <span class="text-slate-500">置信度:</span>
+              <span class="font-mono font-bold">0.95</span>
+            </div>
+            <div class="pt-1.5 border-t">
+              <p class="text-[10px] text-slate-600">李明 主任医师</p>
+              <p class="text-[10px] text-yellow-600 mt-0.5">★★★★★</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 卡片 5 -->
+        <div class="bg-white rounded-lg border border-purple-100 shadow-sm overflow-hidden hover:shadow-lg transition-all">
+          <div class="aspect-square bg-slate-100 relative">
+            <img src="https://picsum.photos/400/400?random=5" alt="IMG_BJ_3341-SAG" class="w-full h-full object-cover">
+            <div class="absolute top-1.5 right-1.5">
+              <span class="bg-red-100 text-red-700 px-1.5 py-0.5 rounded text-[10px] font-bold">不同意</span>
+            </div>
+          </div>
+          <div class="p-3 space-y-1.5">
+            <p class="font-mono text-[10px] text-slate-500">IMG_BJ_3341-SAG</p>
+            <p class="text-xs font-medium text-slate-800">结节 (Nodule)</p>
+            <div class="flex items-center justify-between text-[10px]">
+              <span class="text-slate-500">AI预测:</span>
+              <span class="text-red-600 font-bold">恶性</span>
+            </div>
+            <div class="flex items-center justify-between text-[10px]">
+              <span class="text-slate-500">置信度:</span>
+              <span class="font-mono font-bold">0.58</span>
+            </div>
+            <div class="pt-1.5 border-t">
+              <p class="text-[10px] text-slate-600">王芳 副主任医师</p>
+              <p class="text-[10px] text-yellow-600 mt-0.5">★★☆☆☆</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 卡片 6 -->
+        <div class="bg-white rounded-lg border border-purple-100 shadow-sm overflow-hidden hover:shadow-lg transition-all">
+          <div class="aspect-square bg-slate-100 relative">
+            <img src="https://picsum.photos/400/400?random=6" alt="IMG_SH_7782-COR" class="w-full h-full object-cover">
+            <div class="absolute top-1.5 right-1.5">
+              <span class="bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-[10px] font-bold">同意</span>
+            </div>
+          </div>
+          <div class="p-3 space-y-1.5">
+            <p class="font-mono text-[10px] text-slate-500">IMG_SH_7782-COR</p>
+            <p class="text-xs font-medium text-slate-800">囊肿 (Cyst)</p>
+            <div class="flex items-center justify-between text-[10px]">
+              <span class="text-slate-500">AI预测:</span>
+              <span class="text-green-600 font-bold">良性</span>
+            </div>
+            <div class="flex items-center justify-between text-[10px]">
+              <span class="text-slate-500">置信度:</span>
+              <span class="font-mono font-bold">0.97</span>
+            </div>
+            <div class="pt-1.5 border-t">
+              <p class="text-[10px] text-slate-600">李明 主任医师</p>
+              <p class="text-[10px] text-yellow-600 mt-0.5">★★★★★</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 卡片 7 -->
+        <div class="bg-white rounded-lg border border-purple-100 shadow-sm overflow-hidden hover:shadow-lg transition-all">
+          <div class="aspect-square bg-slate-100 relative">
+            <img src="https://picsum.photos/400/400?random=7" alt="IMG_GZ_9921-AX" class="w-full h-full object-cover">
+            <div class="absolute top-1.5 right-1.5">
+              <span class="bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-[10px] font-bold">同意</span>
+            </div>
+          </div>
+          <div class="p-3 space-y-1.5">
+            <p class="font-mono text-[10px] text-slate-500">IMG_GZ_9921-AX</p>
+            <p class="text-xs font-medium text-slate-800">结节 (Nodule)</p>
+            <div class="flex items-center justify-between text-[10px]">
+              <span class="text-slate-500">AI预测:</span>
+              <span class="text-green-600 font-bold">良性</span>
+            </div>
+            <div class="flex items-center justify-between text-[10px]">
+              <span class="text-slate-500">置信度:</span>
+              <span class="font-mono font-bold">0.94</span>
+            </div>
+            <div class="pt-1.5 border-t">
+              <p class="text-[10px] text-slate-600">张伟 主治医师</p>
+              <p class="text-[10px] text-yellow-600 mt-0.5">★★★★☆</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 卡片 8 -->
+        <div class="bg-white rounded-lg border border-purple-100 shadow-sm overflow-hidden hover:shadow-lg transition-all">
+          <div class="aspect-square bg-slate-100 relative">
+            <img src="https://picsum.photos/400/400?random=8" alt="IMG_SH_6634-SAG" class="w-full h-full object-cover">
+            <div class="absolute top-1.5 right-1.5">
+              <span class="bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded text-[10px] font-bold">需复核</span>
+            </div>
+          </div>
+          <div class="p-3 space-y-1.5">
+            <p class="font-mono text-[10px] text-slate-500">IMG_SH_6634-SAG</p>
+            <p class="text-xs font-medium text-slate-800">弥漫 (Diffuse)</p>
+            <div class="flex items-center justify-between text-[10px]">
+              <span class="text-slate-500">AI预测:</span>
+              <span class="text-orange-600 font-bold">疑似</span>
+            </div>
+            <div class="flex items-center justify-between text-[10px]">
+              <span class="text-slate-500">置信度:</span>
+              <span class="font-mono font-bold">0.67</span>
+            </div>
+            <div class="pt-1.5 border-t">
+              <p class="text-[10px] text-slate-600">王芳 副主任医师</p>
+              <p class="text-[10px] text-yellow-600 mt-0.5">★★★☆☆</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 卡片 9 -->
+        <div class="bg-white rounded-lg border border-purple-100 shadow-sm overflow-hidden hover:shadow-lg transition-all">
+          <div class="aspect-square bg-slate-100 relative">
+            <img src="https://picsum.photos/400/400?random=9" alt="IMG_SH_1234-AX" class="w-full h-full object-cover">
+            <div class="absolute top-1.5 right-1.5">
+              <span class="bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-[10px] font-bold">同意</span>
+            </div>
+          </div>
+          <div class="p-3 space-y-1.5">
+            <p class="font-mono text-[10px] text-slate-500">IMG_SH_1234-AX</p>
+            <p class="text-xs font-medium text-slate-800">结节 (Nodule)</p>
+            <div class="flex items-center justify-between text-[10px]">
+              <span class="text-slate-500">AI预测:</span>
+              <span class="text-green-600 font-bold">良性</span>
+            </div>
+            <div class="flex items-center justify-between text-[10px]">
+              <span class="text-slate-500">置信度:</span>
+              <span class="font-mono font-bold">0.96</span>
+            </div>
+            <div class="pt-1.5 border-t">
+              <p class="text-[10px] text-slate-600">李明 主任医师</p>
+              <p class="text-[10px] text-yellow-600 mt-0.5">★★★★★</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 卡片 10 -->
+        <div class="bg-white rounded-lg border border-purple-100 shadow-sm overflow-hidden hover:shadow-lg transition-all">
+          <div class="aspect-square bg-slate-100 relative">
+            <img src="https://picsum.photos/400/400?random=10" alt="IMG_BJ_5678-SAG" class="w-full h-full object-cover">
+            <div class="absolute top-1.5 right-1.5">
+              <span class="bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-[10px] font-bold">同意</span>
+            </div>
+          </div>
+          <div class="p-3 space-y-1.5">
+            <p class="font-mono text-[10px] text-slate-500">IMG_BJ_5678-SAG</p>
+            <p class="text-xs font-medium text-slate-800">囊肿 (Cyst)</p>
+            <div class="flex items-center justify-between text-[10px]">
+              <span class="text-slate-500">AI预测:</span>
+              <span class="text-green-600 font-bold">良性</span>
+            </div>
+            <div class="flex items-center justify-between text-[10px]">
+              <span class="text-slate-500">置信度:</span>
+              <span class="font-mono font-bold">0.93</span>
+            </div>
+            <div class="pt-1.5 border-t">
+              <p class="text-[10px] text-slate-600">张伟 主治医师</p>
+              <p class="text-[10px] text-yellow-600 mt-0.5">★★★★☆</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 卡片 11 -->
+        <div class="bg-white rounded-lg border border-purple-100 shadow-sm overflow-hidden hover:shadow-lg transition-all">
+          <div class="aspect-square bg-slate-100 relative">
+            <img src="https://picsum.photos/400/400?random=11" alt="IMG_GZ_9012-COR" class="w-full h-full object-cover">
+            <div class="absolute top-1.5 right-1.5">
+              <span class="bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded text-[10px] font-bold">需复核</span>
+            </div>
+          </div>
+          <div class="p-3 space-y-1.5">
+            <p class="font-mono text-[10px] text-slate-500">IMG_GZ_9012-COR</p>
+            <p class="text-xs font-medium text-slate-800">弥漫 (Diffuse)</p>
+            <div class="flex items-center justify-between text-[10px]">
+              <span class="text-slate-500">AI预测:</span>
+              <span class="text-orange-600 font-bold">疑似</span>
+            </div>
+            <div class="flex items-center justify-between text-[10px]">
+              <span class="text-slate-500">置信度:</span>
+              <span class="font-mono font-bold">0.65</span>
+            </div>
+            <div class="pt-1.5 border-t">
+              <p class="text-[10px] text-slate-600">王芳 副主任医师</p>
+              <p class="text-[10px] text-yellow-600 mt-0.5">★★★☆☆</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 卡片 12 -->
+        <div class="bg-white rounded-lg border border-purple-100 shadow-sm overflow-hidden hover:shadow-lg transition-all">
+          <div class="aspect-square bg-slate-100 relative">
+            <img src="https://picsum.photos/400/400?random=12" alt="IMG_SH_3456-AX" class="w-full h-full object-cover">
+            <div class="absolute top-1.5 right-1.5">
+              <span class="bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-[10px] font-bold">同意</span>
+            </div>
+          </div>
+          <div class="p-3 space-y-1.5">
+            <p class="font-mono text-[10px] text-slate-500">IMG_SH_3456-AX</p>
+            <p class="text-xs font-medium text-slate-800">结节 (Nodule)</p>
+            <div class="flex items-center justify-between text-[10px]">
+              <span class="text-slate-500">AI预测:</span>
+              <span class="text-green-600 font-bold">良性</span>
+            </div>
+            <div class="flex items-center justify-between text-[10px]">
+              <span class="text-slate-500">置信度:</span>
+              <span class="font-mono font-bold">0.92</span>
+            </div>
+            <div class="pt-1.5 border-t">
+              <p class="text-[10px] text-slate-600">李明 主任医师</p>
+              <p class="text-[10px] text-yellow-600 mt-0.5">★★★★☆</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模型库界面 -->
+    <div id="modelLibrary" class="p-8 space-y-8 hidden">
+      <!-- 页面标题 -->
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-2xl font-bold text-slate-800 flex items-center">
+            <span class="iconify mr-3 tech-purple text-3xl" data-icon="solar:box-bold"></span>
+            模型库管理
+          </h3>
+          <p class="text-sm text-slate-500 mt-1">查看和管理所有训练模型版本</p>
+        </div>
+        <div class="flex space-x-3">
+          <button onclick="openModelUploadModal()" class="bg-[#722ED1] hover:bg-[#591ba3] text-white px-5 py-2 rounded-lg text-sm font-bold shadow-lg shadow-purple-200 transition-all flex items-center">
+            <span class="iconify mr-2" data-icon="solar:upload-bold"></span> 上传新模型
+          </button>
+        </div>
+      </div>
+
+      <!-- 生产环境模型列表 -->
+      <div class="bg-white rounded-2xl border border-purple-100 shadow-md overflow-hidden">
+        <div class="px-6 py-5 border-b border-purple-100/50 bg-gradient-to-r from-purple-50/50 to-blue-50/50">
+          <h4 class="font-bold text-slate-800 flex items-center">
+            <span class="iconify mr-2 text-purple-600 text-xl" data-icon="solar:star-bold"></span>
+            生产环境模型
+          </h4>
+        </div>
+        <div class="divide-y divide-slate-100/80">
+          <!-- 生产模型 v2.0.5 -->
+          <div class="p-6 hover:bg-slate-50/40 transition-all duration-200">
+            <div class="flex items-center justify-between">
+              <div class="flex-1">
+                <div class="flex items-center space-x-3 mb-3">
+                  <h5 class="text-lg font-bold text-slate-800">肺炎病灶智能定位模型 v2.0.5</h5>
+                  <span class="bg-green-500 text-white text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-widest">生产环境</span>
+                </div>
+                <div class="flex items-center gap-40 text-sm">
+                  <div>
+                    <p class="text-slate-500 text-xs mb-1">部署时间</p>
+                    <p class="font-medium text-slate-700">2026-02-15</p>
+                  </div>
+                  <div>
+                    <p class="text-slate-500 text-xs mb-1">训练数据集</p>
+                    <p class="font-medium text-slate-700">2025-07至2025-12</p>
+                  </div>
+                  <div class="flex-1">
+                    <p class="text-slate-500 text-xs mb-1">更新说明</p>
+                    <p class="font-medium text-slate-700">优化边界识别算法，提升小病灶检测能力</p>
+                  </div>
+                </div>
+              </div>
+              <div class="flex space-x-2 ml-6">
+                <button onclick="openModelDetailModal('v2.0.5')" class="bg-white hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg text-xs font-medium border border-slate-200 transition-all hover:border-purple-300 hover:shadow-sm">查看详情</button>
+                <button class="bg-amber-50 hover:bg-amber-100 text-amber-700 px-4 py-2 rounded-lg text-xs font-medium border border-amber-200 transition-all hover:border-amber-300 hover:shadow-sm">下线</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 生产模型 v2.0.4 -->
+          <div class="p-6 hover:bg-slate-50/40 transition-all duration-200">
+            <div class="flex items-center justify-between">
+              <div class="flex-1">
+                <div class="flex items-center space-x-3 mb-3">
+                  <h5 class="text-lg font-bold text-slate-800">肺炎病灶智能定位模型 v2.0.4</h5>
+                  <span class="bg-green-500 text-white text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-widest">生产环境</span>
+                </div>
+                <div class="flex items-center gap-40 text-sm">
+                  <div>
+                    <p class="text-slate-500 text-xs mb-1">部署时间</p>
+                    <p class="font-medium text-slate-700">2026-01-20</p>
+                  </div>
+                  <div>
+                    <p class="text-slate-500 text-xs mb-1">训练数据集</p>
+                    <p class="font-medium text-slate-700">2025-07至2025-12</p>
+                  </div>
+                  <div class="flex-1">
+                    <p class="text-slate-500 text-xs mb-1">更新说明</p>
+                    <p class="font-medium text-slate-700">优化边界识别算法，提升小病灶检测能力</p>
+                  </div>
+                </div>
+              </div>
+              <div class="flex space-x-2 ml-6">
+                <button onclick="openModelDetailModal('v2.0.4')" class="bg-white hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg text-xs font-medium border border-slate-200 transition-all hover:border-purple-300 hover:shadow-sm">查看详情</button>
+                <button class="bg-amber-50 hover:bg-amber-100 text-amber-700 px-4 py-2 rounded-lg text-xs font-medium border border-amber-200 transition-all hover:border-amber-300 hover:shadow-sm">下线</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 生产模型 v2.0.3 -->
+          <div class="p-6 hover:bg-slate-50/40 transition-all duration-200">
+            <div class="flex items-center justify-between">
+              <div class="flex-1">
+                <div class="flex items-center space-x-3 mb-3">
+                  <h5 class="text-lg font-bold text-slate-800">肺炎病灶智能定位模型 v2.0.3</h5>
+                  <span class="bg-green-500 text-white text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-widest">生产环境</span>
+                </div>
+                <div class="flex items-center gap-40 text-sm">
+                  <div>
+                    <p class="text-slate-500 text-xs mb-1">部署时间</p>
+                    <p class="font-medium text-slate-700">2025-12-10</p>
+                  </div>
+                  <div>
+                    <p class="text-slate-500 text-xs mb-1">训练数据集</p>
+                    <p class="font-medium text-slate-700">2025-01至2025-06</p>
+                  </div>
+                  <div class="flex-1">
+                    <p class="text-slate-500 text-xs mb-1">更新说明</p>
+                    <p class="font-medium text-slate-700">增加数据增强策略，提升模型泛化能力</p>
+                  </div>
+                </div>
+              </div>
+              <div class="flex space-x-2 ml-6">
+                <button onclick="openModelDetailModal('v2.0.3')" class="bg-white hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg text-xs font-medium border border-slate-200 transition-all hover:border-purple-300 hover:shadow-sm">查看详情</button>
+                <button class="bg-amber-50 hover:bg-amber-100 text-amber-700 px-4 py-2 rounded-lg text-xs font-medium border border-amber-200 transition-all hover:border-amber-300 hover:shadow-sm">下线</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 历史模型列表 -->
+      <div class="bg-white rounded-2xl border border-purple-100 shadow-md overflow-hidden">
+        <div class="px-6 py-5 border-b border-slate-100/50 bg-slate-50/50">
+          <h4 class="font-bold text-slate-800 flex items-center">
+            <span class="iconify mr-2 tech-purple" data-icon="solar:history-bold"></span>
+            历史模型版本
+          </h4>
+        </div>
+        <div class="divide-y divide-slate-100/80">
+          <!-- 模型版本 v2.0.2 -->
+          <div class="p-6 hover:bg-slate-50/40 transition-all duration-200">
+            <div class="flex items-center justify-between">
+              <div class="flex-1">
+                <div class="flex items-center space-x-3 mb-3">
+                  <h5 class="text-lg font-bold text-slate-800">肺炎病灶智能定位模型 v2.0.2</h5>
+                  <span class="bg-slate-200 text-slate-700 text-[10px] px-2 py-0.5 rounded font-bold uppercase">已下线</span>
+                </div>
+                <div class="flex items-center gap-40 text-sm">
+                  <div>
+                    <p class="text-slate-500 text-xs mb-1">上传时间</p>
+                    <p class="font-medium text-slate-700">2025-10-05</p>
+                  </div>
+                  <div>
+                    <p class="text-slate-500 text-xs mb-1">训练数据集</p>
+                    <p class="font-medium text-slate-700">2024-07至2024-12</p>
+                  </div>
+                  <div class="flex-1">
+                    <p class="text-slate-500 text-xs mb-1">更新说明</p>
+                    <p class="font-medium text-slate-700">基础版本，采用EfficientNet-B4架构</p>
+                  </div>
+                </div>
+              </div>
+              <div class="flex space-x-2 ml-6">
+                <button onclick="openModelDetailModal('v2.0.2')" class="bg-white hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg text-xs font-medium border border-slate-200 transition-all hover:border-slate-300 hover:shadow-sm">查看详情</button>
+                <button class="bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-lg text-xs font-medium border border-blue-200 transition-all hover:border-blue-300 hover:shadow-sm">重新部署</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 模型版本 v1.5.0 -->
+          <div class="p-6 hover:bg-slate-50/40 transition-all duration-200">
+            <div class="flex items-center justify-between">
+              <div class="flex-1">
+                <div class="flex items-center space-x-3 mb-3">
+                  <h5 class="text-lg font-bold text-slate-800">肺炎病灶智能定位模型 v1.5.0</h5>
+                  <span class="bg-slate-200 text-slate-700 text-[10px] px-2 py-0.5 rounded font-bold uppercase">已归档</span>
+                </div>
+                <div class="flex items-center gap-40 text-sm">
+                  <div>
+                    <p class="text-slate-500 text-xs mb-1">上传时间</p>
+                    <p class="font-medium text-slate-700">2025-06-15</p>
+                  </div>
+                  <div>
+                    <p class="text-slate-500 text-xs mb-1">训练数据集</p>
+                    <p class="font-medium text-slate-700">2024-01至2024-06</p>
+                  </div>
+                  <div class="flex-1">
+                    <p class="text-slate-500 text-xs mb-1">更新说明</p>
+                    <p class="font-medium text-slate-700">初始生产版本</p>
+                  </div>
+                </div>
+              </div>
+              <div class="flex space-x-2 ml-6">
+                <button onclick="openModelDetailModal('v1.5.0')" class="bg-white hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg text-xs font-medium border border-slate-200 transition-all hover:border-slate-300 hover:shadow-sm">查看详情</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI模型配置界面 -->
+    <div id="modelConfig" class="p-8 space-y-8 hidden">
+      <!-- 配置区域标题 -->
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-2xl font-bold text-slate-800 flex items-center">
+            <span class="iconify mr-3 tech-purple text-3xl" data-icon="solar:settings-minimalistic-bold"></span>
+            模型训练参数记录
+          </h3>
+          <p class="text-sm text-slate-500 mt-1">查看和管理模型训练参数配置 (仅供参考，实际训练请在本地环境进行)</p>
+        </div>
+        <div class="flex space-x-3">
+          <button class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-2 rounded-lg text-sm font-bold transition-all flex items-center">
+            <span class="iconify mr-2" data-icon="solar:history-bold"></span> 查看历史配置
+          </button>
+          <button class="bg-[#722ED1] hover:bg-[#591ba3] text-white px-5 py-2 rounded-lg text-sm font-bold shadow-lg shadow-purple-200 transition-all flex items-center">
+            <span class="iconify mr-2" data-icon="solar:download-bold"></span> 导出配置文件
+          </button>
+        </div>
+      </div>
+
+      <!-- 配置卡片网格 -->
+      <div class="grid grid-cols-2 gap-6">
+        <!-- 基础训练参数 -->
+        <div class="bg-white p-6 rounded-2xl border border-purple-100 shadow-sm">
+          <h4 class="font-bold text-slate-800 mb-4 flex items-center">
+            <span class="iconify mr-2 tech-purple" data-icon="solar:chart-2-bold"></span>
+            基础训练参数
+          </h4>
+          <div class="space-y-4">
+            <div>
+              <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">学习率 (Learning Rate)</label>
+              <div class="flex items-center space-x-3">
+                <input type="range" min="0.0001" max="0.01" step="0.0001" value="0.001" class="flex-1" oninput="this.nextElementSibling.value = this.value">
+                <input type="number" value="0.001" step="0.0001" class="w-24 px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono">
+              </div>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">批次大小 (Batch Size)</label>
+              <select class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                <option>8</option>
+                <option>16</option>
+                <option selected>32</option>
+                <option>64</option>
+                <option>128</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">训练轮次 (Epochs)</label>
+              <input type="number" value="100" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono">
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">验证集比例 (Validation Split)</label>
+              <div class="flex items-center space-x-3">
+                <input type="range" min="0.1" max="0.3" step="0.05" value="0.2" class="flex-1" oninput="this.nextElementSibling.textContent = (this.value * 100).toFixed(0) + '%'">
+                <span class="w-16 text-sm font-mono text-slate-700">20%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 优化器配置 -->
+        <div class="bg-white p-6 rounded-2xl border border-purple-100 shadow-sm">
+          <h4 class="font-bold text-slate-800 mb-4 flex items-center">
+            <span class="iconify mr-2 tech-purple" data-icon="solar:graph-up-bold"></span>
+            优化器配置
+          </h4>
+          <div class="space-y-4">
+            <div>
+              <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">优化器类型</label>
+              <select class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                <option selected>Adam</option>
+                <option>AdamW</option>
+                <option>SGD</option>
+                <option>RMSprop</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">动量 (Momentum)</label>
+              <div class="flex items-center space-x-3">
+                <input type="range" min="0" max="1" step="0.05" value="0.9" class="flex-1" oninput="this.nextElementSibling.value = this.value">
+                <input type="number" value="0.9" step="0.05" class="w-24 px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono">
+              </div>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">权重衰减 (Weight Decay)</label>
+              <input type="number" value="0.0001" step="0.0001" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono">
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">学习率调度器</label>
+              <select class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                <option>None</option>
+                <option selected>ReduceLROnPlateau</option>
+                <option>CosineAnnealing</option>
+                <option>StepLR</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 模型架构 -->
+        <div class="bg-white p-6 rounded-2xl border border-purple-100 shadow-sm">
+          <h4 class="font-bold text-slate-800 mb-4 flex items-center">
+            <span class="iconify mr-2 tech-purple" data-icon="solar:layers-bold"></span>
+            模型架构
+          </h4>
+          <div class="space-y-4">
+            <div>
+              <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">骨干网络 (Backbone)</label>
+              <select class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                <option>ResNet50</option>
+                <option>ResNet101</option>
+                <option selected>EfficientNet-B4</option>
+                <option>VGG16</option>
+                <option>DenseNet121</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">输入尺寸 (Input Size)</label>
+              <select class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                <option>224x224</option>
+                <option selected>256x256</option>
+                <option>512x512</option>
+                <option>1024x1024</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">Dropout率</label>
+              <div class="flex items-center space-x-3">
+                <input type="range" min="0" max="0.5" step="0.05" value="0.3" class="flex-1" oninput="this.nextElementSibling.value = this.value">
+                <input type="number" value="0.3" step="0.05" class="w-24 px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono">
+              </div>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">预训练权重</label>
+              <div class="flex items-center space-x-3">
+                <input type="checkbox" id="pretrained" checked class="w-4 h-4 text-purple-600">
+                <label for="pretrained" class="text-sm text-slate-700">使用ImageNet预训练权重</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 数据增强 -->
+        <div class="bg-white p-6 rounded-2xl border border-purple-100 shadow-sm">
+          <h4 class="font-bold text-slate-800 mb-4 flex items-center">
+            <span class="iconify mr-2 tech-purple" data-icon="solar:gallery-bold"></span>
+            数据增强策略
+          </h4>
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <label class="text-sm text-slate-700">随机水平翻转</label>
+              <input type="checkbox" checked class="w-4 h-4 text-purple-600">
+            </div>
+            <div class="flex items-center justify-between">
+              <label class="text-sm text-slate-700">随机垂直翻转</label>
+              <input type="checkbox" checked class="w-4 h-4 text-purple-600">
+            </div>
+            <div class="flex items-center justify-between">
+              <label class="text-sm text-slate-700">随机旋转 (±15°)</label>
+              <input type="checkbox" checked class="w-4 h-4 text-purple-600">
+            </div>
+            <div class="flex items-center justify-between">
+              <label class="text-sm text-slate-700">颜色抖动</label>
+              <input type="checkbox" class="w-4 h-4 text-purple-600">
+            </div>
+            <div class="flex items-center justify-between">
+              <label class="text-sm text-slate-700">高斯模糊</label>
+              <input type="checkbox" class="w-4 h-4 text-purple-600">
+            </div>
+            <div class="flex items-center justify-between">
+              <label class="text-sm text-slate-700">Cutout/Mixup</label>
+              <input type="checkbox" class="w-4 h-4 text-purple-600">
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block mt-4">增强强度</label>
+              <div class="flex items-center space-x-3">
+                <span class="text-xs text-slate-500">弱</span>
+                <input type="range" min="1" max="3" step="1" value="2" class="flex-1">
+                <span class="text-xs text-slate-500">强</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 高级配置 -->
+      <div class="bg-white p-6 rounded-2xl border border-purple-100 shadow-sm">
+        <h4 class="font-bold text-slate-800 mb-4 flex items-center">
+          <span class="iconify mr-2 tech-purple" data-icon="solar:code-bold"></span>
+          高级配置
+        </h4>
+        <div class="grid grid-cols-3 gap-6">
+          <div>
+            <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">早停轮次 (Early Stopping)</label>
+            <input type="number" value="10" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">梯度裁剪 (Gradient Clipping)</label>
+            <input type="number" value="1.0" step="0.1" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">随机种子 (Random Seed)</label>
+            <input type="number" value="42" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono">
+          </div>
+        </div>
+        <div class="mt-4 p-4 bg-purple-50 rounded-lg border border-purple-100">
+          <p class="text-xs text-slate-600 flex items-start">
+            <span class="iconify mr-2 text-purple-600 mt-0.5" data-icon="solar:info-circle-bold"></span>
+            <span>此配置为当前部署模型 v2.0.5 的训练参数记录。您可以导出此配置用于本地训练参考，或在上传新模型时填写对应的训练参数。</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 热力图可视化弹窗 -->
+  <div id="heatmapModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" onclick="closeHeatmapModal()">
+    <div class="bg-white rounded-2xl shadow-2xl w-[90%] max-w-6xl max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+      <!-- 弹窗头部 -->
+      <div class="sticky top-0 bg-white border-b px-8 py-6 flex items-center justify-between z-10">
+        <div>
+          <h3 class="text-2xl font-bold text-slate-800 flex items-center">
+            <span class="iconify mr-3 tech-purple text-3xl" data-icon="solar:eye-bold"></span>
+            影像分析详情
+          </h3>
+          <p class="text-sm text-slate-500 mt-1">样本编号: <span id="modalSampleId" class="font-mono font-bold">IMG_SH_4492-AX</span></p>
+        </div>
+        <button onclick="closeHeatmapModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+          <span class="iconify text-3xl" data-icon="solar:close-circle-bold"></span>
+        </button>
+      </div>
+
+      <!-- 弹窗内容 -->
+      <div class="p-8 space-y-6">
+        <!-- AI分析与医生标注对比 -->
+        <div class="grid grid-cols-2 gap-6">
+          <!-- AI热力图 -->
+          <div class="bg-slate-50 p-6 rounded-2xl border border-purple-100">
+            <h4 class="font-bold text-slate-800 mb-4 flex items-center">
+              <span class="iconify mr-2 tech-purple" data-icon="solar:cpu-bolt-bold"></span>
+              AI热力图分析
+            </h4>
+            <div class="bg-white rounded-lg overflow-hidden border">
+              <img id="aiHeatmap" src="https://modao.cc/agent-py/media/generated_images/2026-03-12/heatmap_ai_sample.jpg" alt="AI Heatmap" class="w-full h-80 object-cover">
+            </div>
+            <div class="mt-4 space-y-2">
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">预测结果:</span>
+                <span id="aiPrediction" class="font-bold text-green-600">良性</span>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">置信度:</span>
+                <span id="aiConfidence" class="font-mono font-bold text-slate-800">0.98</span>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">关注区域:</span>
+                <span class="text-slate-700">左侧结节边界</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 医生标注 -->
+          <div class="bg-slate-50 p-6 rounded-2xl border border-purple-100">
+            <h4 class="font-bold text-slate-800 mb-4 flex items-center">
+              <span class="iconify mr-2 tech-purple" data-icon="solar:user-bold"></span>
+              医生标注结果
+            </h4>
+            <div class="bg-white rounded-lg overflow-hidden border">
+              <img id="doctorAnnotation" src="https://modao.cc/agent-py/media/generated_images/2026-03-12/annotation_doctor_sample.jpg" alt="Doctor Annotation" class="w-full h-80 object-cover">
+            </div>
+            <div class="mt-4 space-y-2">
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">医生诊断:</span>
+                <span id="doctorDiagnosis" class="font-bold text-green-600">良性结节</span>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">标注医生:</span>
+                <span class="text-slate-700">李明 主任医师</span>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">标注时间:</span>
+                <span class="text-slate-700">2026-03-10 14:32</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 医生评价详情 -->
+        <div class="bg-white p-6 rounded-2xl border border-purple-100">
+          <h4 class="font-bold text-slate-800 mb-4 flex items-center">
+            <span class="iconify mr-2 tech-purple" data-icon="solar:chat-round-bold"></span>
+            医生评价与反馈
+          </h4>
+          <div class="space-y-4">
+            <div class="flex items-center space-x-4">
+              <div class="flex items-center space-x-2">
+                <span class="text-sm text-slate-600">评价结果:</span>
+                <span id="doctorFeedback" class="bg-green-100 text-green-700 px-3 py-1 rounded text-sm font-bold">同意</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="text-sm text-slate-600">评分:</span>
+                <span id="doctorRating" class="text-yellow-600 text-lg">★★★★★</span>
+              </div>
+            </div>
+            <div>
+              <p class="text-sm text-slate-600 mb-2">详细意见:</p>
+              <div id="doctorComment" class="bg-slate-50 p-4 rounded-lg text-sm text-slate-700 leading-relaxed">
+                AI模型对该样本的分析准确，热力图显示的关注区域与实际病灶位置高度吻合。结节边界清晰，形态规则，符合良性特征。建议继续保持该模型在此类病例上的应用。
+              </div>
+            </div>
+            <div class="grid grid-cols-3 gap-4 pt-4 border-t">
+              <div class="text-center">
+                <p class="text-xs text-slate-500 mb-1">诊断一致性</p>
+                <p class="text-2xl font-bold text-green-600">100%</p>
+              </div>
+              <div class="text-center">
+                <p class="text-xs text-slate-500 mb-1">标注质量</p>
+                <p class="text-2xl font-bold text-purple-600">优秀</p>
+              </div>
+              <div class="text-center">
+                <p class="text-xs text-slate-500 mb-1">复核状态</p>
+                <p class="text-2xl font-bold text-slate-600">已完成</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 技术指标对比 -->
+        <div class="bg-white p-6 rounded-2xl border border-purple-100">
+          <h4 class="font-bold text-slate-800 mb-4 flex items-center">
+            <span class="iconify mr-2 tech-purple" data-icon="solar:chart-square-bold"></span>
+            技术指标对比
+          </h4>
+          <div class="grid grid-cols-4 gap-4">
+            <div class="text-center p-4 bg-slate-50 rounded-lg">
+              <p class="text-xs text-slate-500 mb-2">IoU (交并比)</p>
+              <p class="text-xl font-bold text-slate-800">0.94</p>
+            </div>
+            <div class="text-center p-4 bg-slate-50 rounded-lg">
+              <p class="text-xs text-slate-500 mb-2">Dice系数</p>
+              <p class="text-xl font-bold text-slate-800">0.97</p>
+            </div>
+            <div class="text-center p-4 bg-slate-50 rounded-lg">
+              <p class="text-xs text-slate-500 mb-2">边界精度</p>
+              <p class="text-xl font-bold text-slate-800">96.2%</p>
+            </div>
+            <div class="text-center p-4 bg-slate-50 rounded-lg">
+              <p class="text-xs text-slate-500 mb-2">分割准确率</p>
+              <p class="text-xl font-bold text-slate-800">98.1%</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 模型上传弹窗 -->
+  <div id="modelUploadModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" onclick="closeModelUploadModal()">
+    <div class="bg-white rounded-2xl shadow-2xl w-[90%] max-w-3xl max-h-[90vh] overflow-y-auto overflow-hidden" onclick="event.stopPropagation()">
+      <!-- 弹窗头部 -->
+      <div class="sticky top-0 bg-white border-b px-8 py-6 flex items-center justify-between z-10 rounded-t-2xl">
+        <div>
+          <h3 class="text-2xl font-bold text-slate-800 flex items-center">
+            <span class="iconify mr-3 tech-purple text-3xl" data-icon="solar:upload-bold"></span>
+            上传新模型
+          </h3>
+          <p class="text-sm text-slate-500 mt-1">上传训练好的模型文件并填写相关信息</p>
+        </div>
+        <button onclick="closeModelUploadModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+          <span class="iconify text-3xl" data-icon="solar:close-circle-bold"></span>
+        </button>
+      </div>
+
+      <!-- 弹窗内容 -->
+      <div class="p-8 space-y-6">
+        <!-- 模型文件上传 -->
+        <div class="bg-slate-50 p-6 rounded-2xl border border-purple-100">
+          <h4 class="font-bold text-slate-800 mb-4 flex items-center">
+            <span class="iconify mr-2 tech-purple" data-icon="solar:file-bold"></span>
+            模型文件 *
+          </h4>
+          <div class="border-2 border-dashed border-purple-200 rounded-xl p-8 text-center hover:border-purple-400 transition-colors cursor-pointer bg-white">
+            <span class="iconify text-5xl text-purple-300 mb-3" data-icon="solar:cloud-upload-bold"></span>
+            <p class="text-sm text-slate-600 mb-2">拖拽文件到此处或点击选择</p>
+            <p class="text-xs text-slate-400">支持格式: .pth, .h5, .onnx (最大 500MB)</p>
+            <input type="file" class="hidden" accept=".pth,.h5,.onnx">
+          </div>
+        </div>
+
+        <!-- 模型信息 -->
+        <div class="bg-white p-6 rounded-2xl border border-purple-100">
+          <h4 class="font-bold text-slate-800 mb-4 flex items-center">
+            <span class="iconify mr-2 tech-purple" data-icon="solar:document-text-bold"></span>
+            模型信息
+          </h4>
+          <div class="space-y-4">
+            <div>
+              <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">模型版本号 *</label>
+              <input type="text" placeholder="如: v2.1.0" class="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm">
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">更新说明 *</label>
+              <textarea placeholder="描述本次更新的主要内容和改进点..." rows="3" class="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm"></textarea>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-600 uppercase tracking-widest mb-2 block">训练数据集 *</label>
+              <input type="text" placeholder="如: 2024-01至2024-06数据" class="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm">
+            </div>
+          </div>
+        </div>
+
+        <!-- 提示信息 -->
+        <div class="p-4 bg-blue-50 rounded-lg border border-blue-100">
+          <p class="text-xs text-blue-700 flex items-start">
+            <span class="iconify mr-2 text-blue-600 mt-0.5" data-icon="solar:info-circle-bold"></span>
+            <span>上传后系统将自动验证模型格式并运行基础测试。测试通过后将提交给管理员审批，审批通过后即可部署到生产环境。</span>
+          </p>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="flex justify-end space-x-3 pt-4 border-t rounded-b-2xl">
+          <button onclick="closeModelUploadModal()" class="px-6 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all">
+            取消
+          </button>
+          <button class="px-6 py-2 bg-[#722ED1] hover:bg-[#591ba3] text-white rounded-lg text-sm font-bold shadow-lg shadow-purple-200 transition-all">
+            开始上传
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 模型详情弹窗 -->
+  <div id="modelDetailModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" onclick="closeModelDetailModal()">
+    <div class="bg-white rounded-2xl shadow-2xl w-[90%] max-w-4xl max-h-[90vh] overflow-y-auto overflow-hidden" onclick="event.stopPropagation()">
+      <!-- 弹窗头部 -->
+      <div class="sticky top-0 bg-white border-b px-8 py-6 flex items-center justify-between z-10 rounded-t-2xl">
+        <div>
+          <h3 class="text-2xl font-bold text-slate-800 flex items-center">
+            <span class="iconify mr-3 tech-purple text-3xl" data-icon="solar:box-bold"></span>
+            <span id="modalModelName">模型详情</span>
+          </h3>
+          <p class="text-sm text-slate-500 mt-1">查看模型的详细信息和性能指标</p>
+        </div>
+        <button onclick="closeModelDetailModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+          <span class="iconify text-3xl" data-icon="solar:close-circle-bold"></span>
+        </button>
+      </div>
+
+      <!-- 弹窗内容 -->
+      <div class="p-8 space-y-6">
+        <!-- 基本信息 -->
+        <div class="bg-gradient-to-br from-purple-50 to-blue-50 p-6 rounded-2xl border border-purple-100">
+          <h4 class="font-bold text-slate-800 mb-4 flex items-center">
+            <span class="iconify mr-2 tech-purple" data-icon="solar:document-text-bold"></span>
+            基本信息
+          </h4>
+          <div class="grid grid-cols-2 gap-6">
+            <div>
+              <p class="text-xs text-slate-500 mb-1">模型名称</p>
+              <p class="font-medium text-slate-800" id="detailModelName">肺炎病灶智能定位模型 v2.0.5</p>
+            </div>
+            <div>
+              <p class="text-xs text-slate-500 mb-1">模型状态</p>
+              <p class="font-medium text-slate-800" id="detailModelStatus">
+                <span class="bg-green-500 text-white text-[10px] px-3 py-1 rounded-full font-bold uppercase">生产环境</span>
+              </p>
+            </div>
+            <div>
+              <p class="text-xs text-slate-500 mb-1">部署时间</p>
+              <p class="font-medium text-slate-800" id="detailDeployTime">2026-02-15</p>
+            </div>
+            <div>
+              <p class="text-xs text-slate-500 mb-1">训练数据集</p>
+              <p class="font-medium text-slate-800" id="detailDataset">2025-07至2025-12</p>
+            </div>
+            <div class="col-span-2">
+              <p class="text-xs text-slate-500 mb-1">更新说明</p>
+              <p class="font-medium text-slate-800" id="detailDescription">优化边界识别算法，提升小病灶检测能力</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 性能指标 -->
+        <div class="bg-white p-6 rounded-2xl border border-purple-100">
+          <h4 class="font-bold text-slate-800 mb-4 flex items-center">
+            <span class="iconify mr-2 tech-purple" data-icon="solar:chart-2-bold"></span>
+            性能指标
+          </h4>
+          <div class="grid grid-cols-4 gap-4">
+            <div class="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl">
+              <p class="text-xs text-slate-600 mb-2">准确率</p>
+              <p class="text-2xl font-bold text-purple-600">96.8%</p>
+            </div>
+            <div class="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl">
+              <p class="text-xs text-slate-600 mb-2">精确率</p>
+              <p class="text-2xl font-bold text-blue-600">95.2%</p>
+            </div>
+            <div class="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl">
+              <p class="text-xs text-slate-600 mb-2">召回率</p>
+              <p class="text-2xl font-bold text-green-600">97.5%</p>
+            </div>
+            <div class="text-center p-4 bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl">
+              <p class="text-xs text-slate-600 mb-2">F1分数</p>
+              <p class="text-2xl font-bold text-amber-600">96.3%</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 技术细节 -->
+        <div class="bg-white p-6 rounded-2xl border border-purple-100">
+          <h4 class="font-bold text-slate-800 mb-4 flex items-center">
+            <span class="iconify mr-2 tech-purple" data-icon="solar:settings-minimalistic-bold"></span>
+            技术细节
+          </h4>
+          <div class="grid grid-cols-3 gap-6">
+            <div>
+              <p class="text-xs text-slate-500 mb-1">模型架构</p>
+              <p class="font-medium text-slate-800">EfficientNet-B4</p>
+            </div>
+            <div>
+              <p class="text-xs text-slate-500 mb-1">数据集规模</p>
+              <p class="font-medium text-slate-800">15,000 样本</p>
+            </div>
+            <div>
+              <p class="text-xs text-slate-500 mb-1">训练时长</p>
+              <p class="font-medium text-slate-800">48 小时</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="flex justify-end space-x-3 pt-4 border-t">
+          <button onclick="closeModelDetailModal()" class="px-6 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all">
+            关闭
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Performance Chart (替代原来的 Loss Chart)
+    const performanceChart = echarts.init(document.getElementById('performanceChart'));
+    const days = Array.from({
+      length: 30
+    }, (_, i) => `${i + 1}日`);
+    const accuracyData = days.map(() => 0.95 + Math.random() * 0.03);
+    const agreementData = days.map(() => 0.88 + Math.random() * 0.05);
+
+    performanceChart.setOption({
+      tooltip: {
+        trigger: 'axis'
+      },
+      legend: {
+        data: ['模型准确率', '医生同意率']
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        containLabel: true
+      },
+      xAxis: {
+        type: 'category',
+        boundaryGap: false,
+        data: days,
+        axisLabel: {
+          interval: 4
+        }
+      },
+      yAxis: {
+        type: 'value',
+        min: 0.85,
+        max: 1.0,
+        axisLabel: {
+          formatter: '{value}'
+        }
+      },
+      series: [{
+          name: '模型准确率',
+          type: 'line',
+          smooth: true,
+          data: accuracyData,
+          itemStyle: {
+            color: '#722ED1'
+          },
+          areaStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                offset: 0,
+                color: 'rgba(114, 46, 209, 0.2)'
+              },
+              {
+                offset: 1,
+                color: 'rgba(114, 46, 209, 0)'
+              }
+            ])
+          }
+        },
+        {
+          name: '医生同意率',
+          type: 'line',
+          smooth: true,
+          data: agreementData,
+          itemStyle: {
+            color: '#10b981'
+          }
+        }
+      ]
+    });
+
+    // Feedback Pie (替代原来的 Sample Pie)
+    const feedbackPie = echarts.init(document.getElementById('feedbackPie'));
+    feedbackPie.setOption({
+      series: [{
+        type: 'pie',
+        radius: ['50%', '80%'],
+        avoidLabelOverlap: false,
+        label: {
+          show: false
+        },
+        data: [{
+            value: 1089,
+            name: '同意',
+            itemStyle: {
+              color: '#10b981'
+            }
+          },
+          {
+            value: 87,
+            name: '需复核',
+            itemStyle: {
+              color: '#f59e0b'
+            }
+          },
+          {
+            value: 24,
+            name: '不同意',
+            itemStyle: {
+              color: '#ef4444'
+            }
+          }
+        ]
+      }]
+    });
+
+    window.addEventListener('resize', function() {
+      performanceChart.resize();
+      feedbackPie.resize();
+    });
+
+    // 切换显示功能
+    function showModelConfig() {
+      document.getElementById('trainingOverview').classList.add('hidden');
+      document.getElementById('datasetSamples').classList.add('hidden');
+      document.getElementById('modelLibrary').classList.add('hidden');
+      document.getElementById('modelConfig').classList.remove('hidden');
+
+      // 更新侧边栏激活状态
+      document.querySelectorAll('.sidebar-item').forEach(item => {
+        item.classList.remove('bg-purple-50', 'tech-purple');
+      });
+      event.target.closest('.sidebar-item').classList.add('bg-purple-50', 'tech-purple');
+    }
+
+    function showTrainingOverview() {
+      document.getElementById('modelConfig').classList.add('hidden');
+      document.getElementById('datasetSamples').classList.add('hidden');
+      document.getElementById('modelLibrary').classList.add('hidden');
+      document.getElementById('trainingOverview').classList.remove('hidden');
+
+      // 更新侧边栏激活状态
+      document.querySelectorAll('.sidebar-item').forEach(item => {
+        item.classList.remove('bg-purple-50', 'tech-purple');
+      });
+      event.target.closest('.sidebar-item').classList.add('bg-purple-50', 'tech-purple');
+    }
+
+    function showDatasetSamples() {
+      document.getElementById('trainingOverview').classList.add('hidden');
+      document.getElementById('modelConfig').classList.add('hidden');
+      document.getElementById('modelLibrary').classList.add('hidden');
+      document.getElementById('datasetSamples').classList.remove('hidden');
+
+      // 更新侧边栏激活状态
+      document.querySelectorAll('.sidebar-item').forEach(item => {
+        item.classList.remove('bg-purple-50', 'tech-purple');
+      });
+      event.target.closest('.sidebar-item').classList.add('bg-purple-50', 'tech-purple');
+    }
+
+    function showModelLibrary() {
+      document.getElementById('trainingOverview').classList.add('hidden');
+      document.getElementById('datasetSamples').classList.add('hidden');
+      document.getElementById('modelConfig').classList.add('hidden');
+      document.getElementById('modelLibrary').classList.remove('hidden');
+
+      // 更新侧边栏激活状态
+      document.querySelectorAll('.sidebar-item').forEach(item => {
+        item.classList.remove('bg-purple-50', 'tech-purple');
+      });
+      event.target.closest('.sidebar-item').classList.add('bg-purple-50', 'tech-purple');
+    }
+
+    // 视图切换功能
+    function switchToTableView() {
+      document.getElementById('tableView').classList.remove('hidden');
+      document.getElementById('cardView').classList.add('hidden');
+      document.getElementById('tableViewBtn').classList.add('bg-purple-100', 'text-purple-700');
+      document.getElementById('tableViewBtn').classList.remove('text-slate-600', 'hover:bg-slate-50');
+      document.getElementById('cardViewBtn').classList.remove('bg-purple-100', 'text-purple-700');
+      document.getElementById('cardViewBtn').classList.add('text-slate-600', 'hover:bg-slate-50');
+    }
+
+    function switchToCardView() {
+      document.getElementById('tableView').classList.add('hidden');
+      document.getElementById('cardView').classList.remove('hidden');
+      document.getElementById('cardViewBtn').classList.add('bg-purple-100', 'text-purple-700');
+      document.getElementById('cardViewBtn').classList.remove('text-slate-600', 'hover:bg-slate-50');
+      document.getElementById('tableViewBtn').classList.remove('bg-purple-100', 'text-purple-700');
+      document.getElementById('tableViewBtn').classList.add('text-slate-600', 'hover:bg-slate-50');
+    }
+
+    // 热力图弹窗功能
+    function openHeatmapModal(sampleId, type) {
+      const modal = document.getElementById('heatmapModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+
+      // 更新样本编号
+      document.getElementById('modalSampleId').textContent = sampleId;
+
+      // 根据类型更新内容
+      if (type === 'benign') {
+        document.getElementById('aiPrediction').textContent = '良性';
+        document.getElementById('aiPrediction').className = 'font-bold text-green-600';
+        document.getElementById('aiConfidence').textContent = '0.98';
+        document.getElementById('doctorDiagnosis').textContent = '良性结节';
+        document.getElementById('doctorDiagnosis').className = 'font-bold text-green-600';
+        document.getElementById('doctorFeedback').textContent = '同意';
+        document.getElementById('doctorFeedback').className = 'bg-green-100 text-green-700 px-3 py-1 rounded text-sm font-bold';
+        document.getElementById('doctorRating').textContent = '★★★★★';
+        document.getElementById('doctorComment').textContent = 'AI模型对该样本的分析准确，热力图显示的关注区域与实际病灶位置高度吻合。结节边界清晰，形态规则，符合良性特征。建议继续保持该模型在此类病例上的应用。';
+      } else if (type === 'suspicious') {
+        document.getElementById('aiPrediction').textContent = '疑似';
+        document.getElementById('aiPrediction').className = 'font-bold text-orange-600';
+        document.getElementById('aiConfidence').textContent = '0.62';
+        document.getElementById('doctorDiagnosis').textContent = '疑似恶性';
+        document.getElementById('doctorDiagnosis').className = 'font-bold text-orange-600';
+        document.getElementById('doctorFeedback').textContent = '需复核';
+        document.getElementById('doctorFeedback').className = 'bg-yellow-100 text-yellow-700 px-3 py-1 rounded text-sm font-bold';
+        document.getElementById('doctorRating').textContent = '★★★☆☆';
+        document.getElementById('doctorComment').textContent = 'AI模型置信度较低，建议结合患者病史和其他影像学检查综合判断。病灶边界不够清晰，需要进一步的病理学检查确认诊断。建议优化模型对此类弥漫性病变的识别能力。';
+      }
+
+      // 禁止body滚动
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeHeatmapModal() {
+      const modal = document.getElementById('heatmapModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+
+      // 恢复body滚动
+      document.body.style.overflow = 'auto';
+    }
+
+    // 模型上传弹窗功能
+    function openModelUploadModal() {
+      const modal = document.getElementById('modelUploadModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModelUploadModal() {
+      const modal = document.getElementById('modelUploadModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      document.body.style.overflow = 'auto';
+    }
+
+    // 模型详情弹窗功能
+    function openModelDetailModal(modelId) {
+      const modal = document.getElementById('modelDetailModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.body.style.overflow = 'hidden';
+
+      // 这里可以根据modelId加载不同的模型数据
+      // 示例数据已经在HTML中设置
+    }
+
+    function closeModelDetailModal() {
+      const modal = document.getElementById('modelDetailModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      document.body.style.overflow = 'auto';
+    }
+
+    // 模型评测功能
+    function updateEvaluationButton() {
+      const checkboxes = document.querySelectorAll('.model-eval-checkbox:checked');
+      const count = checkboxes.length;
+      const btn = document.getElementById('startEvaluationBtn');
+      const countSpan = document.getElementById('selectedModelCount');
+
+      countSpan.textContent = count;
+
+      if (count > 0) {
+        btn.disabled = false;
+        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+      } else {
+        btn.disabled = true;
+        btn.classList.add('opacity-50', 'cursor-not-allowed');
+      }
+    }
+
+    function startModelEvaluation() {
+      const checkboxes = document.querySelectorAll('.model-eval-checkbox:checked');
+      const selectedModels = Array.from(checkboxes).map(cb => cb.dataset.modelId);
+
+      if (selectedModels.length === 0) {
+        alert('请至少选择一个模型进行评测');
+        return;
+      }
+
+      // 显示评测开始提示
+      const modelList = selectedModels.join(', ');
+      alert(`开始评测以下模型：\n${modelList}\n\n评测将在后台进行，完成后会通知您查看结果。`);
+
+      // 这里可以添加实际的评测逻辑，比如：
+      // - 发送API请求到后端
+      // - 显示评测进度界面
+      // - 跳转到评测结果页面
+      console.log('开始评测模型:', selectedModels);
+    }
+  </script>
+
+</body>
+
+</html>

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试医生修改数据</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        h2 {
+            color: #333;
+            border-bottom: 2px solid #722ED1;
+            padding-bottom: 10px;
+        }
+        .result {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .modified-item {
+            background: #e6f7ff;
+            border-left: 4px solid #1890ff;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+        button {
+            background: #722ED1;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #531dab;
+        }
+        .info {
+            color: #666;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>测试医生修改数据获取</h1>
+
+    <div class="section">
+        <h2>1. 获取所有推理结果</h2>
+        <button onclick="fetchAllResults()">获取推理结果列表</button>
+        <div class="info">注意：需要先在浏览器中登录系统，获取 token</div>
+        <div id="allResults" class="result"></div>
+    </div>
+
+    <div class="section">
+        <h2>2. 筛选有医生修改的数据</h2>
+        <div id="modifiedResults" class="result"></div>
+    </div>
+
+    <div class="section">
+        <h2>3. 测试获取单个推理结果详情</h2>
+        <input type="text" id="resultId" placeholder="输入 resultId" style="padding: 8px; width: 300px; margin-right: 10px;">
+        <button onclick="fetchResultDetail()">获取详情</button>
+        <div id="resultDetail" class="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://116.62.219.49:8080';
+
+        function getToken() {
+            return sessionStorage.getItem('token') || localStorage.getItem('token');
+        }
+
+        async function fetchAllResults() {
+            const resultDiv = document.getElementById('allResults');
+            const modifiedDiv = document.getElementById('modifiedResults');
+
+            try {
+                resultDiv.innerHTML = '正在获取数据...';
+
+                const token = getToken();
+                if (!token) {
+                    resultDiv.innerHTML = '<span class="error">错误：未找到 token，请先登录系统</span>';
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE}/api/v1/infer_result/get`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                console.log('获取到的数据:', data);
+
+                resultDiv.innerHTML = `<span class="success">成功获取数据！</span>\n\n${JSON.stringify(data, null, 2)}`;
+
+                // 筛选有医生修改的数据
+                const results = Array.isArray(data) ? data : (data.data || []);
+                const modifiedResults = results.filter(item => item.isModified === true);
+
+                if (modifiedResults.length > 0) {
+                    let html = `<span class="success">找到 ${modifiedResults.length} 条医生修改的数据：</span>\n\n`;
+                    modifiedResults.forEach((item, index) => {
+                        html += `<div class="modified-item">
+                            <strong>记录 ${index + 1}:</strong><br>
+                            resultId: ${item.resultId || item.result_id}<br>
+                            imageId: ${item.imageId || item.image_id}<br>
+                            isModified: ${item.isModified}<br>
+                            modifiedBy: ${item.modifiedBy || '未知'}<br>
+                            modifiedLabel: ${item.modifiedLabel || '未知'}<br>
+                            modifiedTime: ${item.modifiedTime || '未知'}<br>
+                            modifiedBbox: ${item.modifiedBbox ? JSON.stringify(item.modifiedBbox) : '无'}<br>
+                        </div>`;
+                    });
+                    modifiedDiv.innerHTML = html;
+                } else {
+                    modifiedDiv.innerHTML = '<span class="error">未找到医生修改的数据</span>';
+                }
+
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">错误: ${error.message}</span>`;
+                console.error('获取数据失败:', error);
+            }
+        }
+
+        async function fetchResultDetail() {
+            const resultId = document.getElementById('resultId').value.trim();
+            const detailDiv = document.getElementById('resultDetail');
+
+            if (!resultId) {
+                detailDiv.innerHTML = '<span class="error">请输入 resultId</span>';
+                return;
+            }
+
+            try {
+                detailDiv.innerHTML = '正在获取详情...';
+
+                const token = getToken();
+                if (!token) {
+                    detailDiv.innerHTML = '<span class="error">错误：未找到 token，请先登录系统</span>';
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE}/api/v1/infer_result/get/${resultId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                console.log('获取到的详情:', data);
+
+                let html = `<span class="success">成功获取详情！</span>\n\n`;
+                html += `<strong>基本信息：</strong>\n`;
+                html += `resultId: ${data.resultId || data.result_id}\n`;
+                html += `imageId: ${data.imageId || data.image_id}\n`;
+                html += `caseId: ${data.caseId || data.case_id}\n`;
+                html += `label: ${data.label}\n`;
+                html += `confidenceScore: ${data.confidenceScore || data.confidence_score}\n\n`;
+
+                html += `<strong>医生修改信息：</strong>\n`;
+                html += `isModified: ${data.isModified}\n`;
+                html += `modifiedBy: ${data.modifiedBy || '无'}\n`;
+                html += `modifiedLabel: ${data.modifiedLabel || '无'}\n`;
+                html += `modifiedTime: ${data.modifiedTime || '无'}\n`;
+                html += `modifiedBbox: ${data.modifiedBbox ? JSON.stringify(data.modifiedBbox, null, 2) : '无'}\n\n`;
+
+                html += `<strong>原始 bbox：</strong>\n`;
+                html += `${data.bbox ? JSON.stringify(data.bbox, null, 2) : '无'}\n\n`;
+
+                html += `<strong>完整数据：</strong>\n`;
+                html += JSON.stringify(data, null, 2);
+
+                detailDiv.innerHTML = html;
+
+            } catch (error) {
+                detailDiv.innerHTML = `<span class="error">错误: ${error.message}</span>`;
+                console.error('获取详情失败:', error);
+            }
+        }
+
+        // 页面加载时检查 token
+        window.onload = function() {
+            const token = getToken();
+            if (token) {
+                console.log('找到 token:', token.substring(0, 20) + '...');
+            } else {
+                console.warn('未找到 token，请先登录系统');
+            }
+        };
+    </script>
+</body>
+</html>

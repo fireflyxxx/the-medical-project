@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cmd /c \"type d:\\\\frontend-merge\\\\frontend-vite\\\\src\\\\router\\\\index.js\")",
+      "Bash(powershell -Command \"Get-Content ''d:\\\\frontend-merge\\\\frontend-vite\\\\src\\\\router\\\\index.js''\")",
+      "Bash(powershell -Command \"Get-ChildItem -Recurse ''d:\\\\frontend-merge\\\\frontend-vite\\\\src\\\\router'' | Select-Object FullName\")"
+    ]
+  }
+}

@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>X线诊断报告 - 肺炎</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Source+Han+Sans+CN:wght@300;400;500;600&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Source Han Sans CN', 'Microsoft YaHei', sans-serif;
+      background: #f5f5f5;
+      line-height: 1.8;
+      color: #333;
+    }
+
+    .report-container {
+      max-width: 210mm;
+      margin: 20px auto;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 15mm 20mm;
+    }
+
+    /* 医院抬头 */
+    .hospital-header {
+      text-align: center;
+      border-bottom: 2px solid #2c5aa0;
+      padding-bottom: 12px;
+      margin-bottom: 20px;
+    }
+
+    .hospital-name {
+      font-size: 24px;
+      font-weight: 600;
+      color: #1a1a1a;
+      font-family: 'Noto Serif SC', serif;
+      letter-spacing: 2px;
+    }
+
+    .department-name {
+      font-size: 14px;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    /* 报告标题 */
+    .report-title {
+      text-align: center;
+      font-size: 20px;
+      font-weight: 600;
+      margin: 24px 0;
+      font-family: 'Noto Serif SC', serif;
+      letter-spacing: 4px;
+    }
+
+    /* 患者信息表格 */
+    .patient-info {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      font-size: 13px;
+    }
+
+    .patient-info td {
+      padding: 6px 12px;
+      border: 1px solid #ddd;
+    }
+
+    .patient-info .label {
+      background: #f8f9fa;
+      font-weight: 500;
+      width: 90px;
+      color: #555;
+    }
+
+    .patient-info .value {
+      color: #222;
+    }
+
+    /* 影像展示区 */
+    .image-section {
+      margin: 20px 0;
+      text-align: center;
+    }
+
+    .xray-image {
+      width: 100%;
+      max-width: 500px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: #000;
+    }
+
+    .image-caption {
+      font-size: 12px;
+      color: #666;
+      margin-top: 8px;
+      font-style: italic;
+    }
+
+    /* 内容区块 */
+    .content-section {
+      margin-bottom: 20px;
+    }
+
+    .section-header {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 10px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .section-content {
+      font-size: 14px;
+      line-height: 2;
+      text-align: justify;
+      color: #333;
+      text-indent: 2em;
+    }
+
+    .section-content p {
+      margin-bottom: 8px;
+    }
+
+    /* 测量数据 */
+    .measurement {
+      font-family: 'Consolas', 'Monaco', monospace;
+      color: #2c5aa0;
+      font-weight: 500;
+    }
+
+    /* 重点标注 */
+    .highlight {
+      font-weight: 600;
+      color: #d32f2f;
+    }
+
+    /* 诊断结论 */
+    .diagnosis-section {
+      background: #fafafa;
+      border-left: 4px solid #2c5aa0;
+      padding: 12px 16px;
+      margin: 20px 0;
+    }
+
+    .diagnosis-item {
+      margin-bottom: 8px;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    .diagnosis-number {
+      display: inline-block;
+      width: 24px;
+      color: #666;
+    }
+
+    /* 建议区域 */
+    .suggestion-box {
+      background: #fff9e6;
+      border: 1px solid #ffe082;
+      border-radius: 4px;
+      padding: 12px 16px;
+      margin: 16px 0;
+      font-size: 13px;
+      line-height: 1.8;
+    }
+
+    .suggestion-title {
+      font-weight: 600;
+      color: #f57c00;
+      margin-bottom: 6px;
+    }
+
+    /* 签名区 */
+    .signature-area {
+      margin-top: 40px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+    }
+
+    .signature-item {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .signature-label {
+      color: #666;
+    }
+
+    .signature-line {
+      border-bottom: 1px solid #333;
+      min-width: 120px;
+      padding-bottom: 2px;
+    }
+
+    /* 页脚 */
+    .report-footer {
+      margin-top: 30px;
+      padding-top: 12px;
+      border-top: 1px solid #e0e0e0;
+      font-size: 11px;
+      color: #999;
+      line-height: 1.6;
+    }
+
+    /* 打印样式 */
+    @media print {
+      body {
+        background: white;
+      }
+      .report-container {
+        box-shadow: none;
+        margin: 0;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+
+    /* 工具栏 */
+    .toolbar {
+      max-width: 210mm;
+      margin: 0 auto 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+
+    .toolbar button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    .btn-back {
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    .btn-back:hover {
+      background: #e0e0e0;
+    }
+
+    .btn-edit {
+      background: #2196f3;
+      color: white;
+    }
+
+    .btn-edit:hover {
+      background: #1976d2;
+    }
+
+    .btn-print {
+      background: #4caf50;
+      color: white;
+    }
+
+    .btn-print:hover {
+      background: #388e3c;
+    }
+  </style>
+</head>
+<body>
+  <!-- 工具栏 -->
+  <div class="toolbar no-print">
+    <button class="btn-back" onclick="window.history.back()">← 返回</button>
+    <div style="display: flex; gap: 8px;">
+      <button class="btn-edit" onclick="toggleEdit()">编辑</button>
+      <button class="btn-print" onclick="window.print()">打印</button>
+    </div>
+  </div>
+
+  <!-- 报告主体 -->
+  <div class="report-container">
+    <!-- 医院抬头 -->
+    <div class="hospital-header">
+      <div class="hospital-name">北京协和医院</div>
+      <div class="department-name">放射科</div>
+    </div>
+
+    <!-- 报告标题 -->
+    <div class="report-title">X线诊断报告</div>
+
+    <!-- 患者基本信息 -->
+    <table class="patient-info">
+      <tr>
+        <td class="label">姓名</td>
+        <td class="value">张*华</td>
+        <td class="label">性别</td>
+        <td class="value">女</td>
+        <td class="label">年龄</td>
+        <td class="value">42岁</td>
+      </tr>
+      <tr>
+        <td class="label">病历号</td>
+        <td class="value">202603150023</td>
+        <td class="label">检查日期</td>
+        <td class="value">2026年3月15日</td>
+        <td class="label">检查时间</td>
+        <td class="value">14:30</td>
+      </tr>
+      <tr>
+        <td class="label">检查部位</td>
+        <td class="value" colspan="5">胸部正位片</td>
+      </tr>
+      <tr>
+        <td class="label">临床诊断</td>
+        <td class="value" colspan="5">发热3天，咳嗽伴咳痰，疑似肺炎</td>
+      </tr>
+    </table>
+
+    <!-- 影像展示 -->
+    <div class="image-section">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/Pneumonia_x-ray.jpg/800px-Pneumonia_x-ray.jpg"
+           alt="胸部X光片"
+           class="xray-image">
+      <div class="image-caption">图1：胸部正位X线片</div>
+    </div>
+
+    <!-- X线所见 -->
+    <div class="content-section">
+      <div class="section-header">X线所见</div>
+      <div class="section-content">
+        <p>胸廓对称，肋骨、锁骨未见明显骨质异常。气管居中，纵隔未见明显增宽或移位。</p>
+
+        <p><span class="highlight">右肺下叶可见片状高密度影</span>，边界模糊，密度不均匀，其内可见支气管充气征。病变范围约<span class="measurement">6×4cm</span>，累及右肺下叶后基底段及外侧基底段。右侧肋膈角变钝，提示少量胸腔积液可能。</p>
+
+        <p>左肺各叶未见明显实质性病变，肺纹理清晰，未见明显增粗或紊乱。左侧肋膈角锐利。</p>
+
+        <p>心影大小、形态正常，心胸比例约<span class="measurement">0.45</span>。主动脉结无明显增宽，肺动脉段无突出。</p>
+
+        <p>双侧膈面光滑，位置正常，膈下未见游离气体。</p>
+      </div>
+    </div>
+
+    <!-- 影像诊断 -->
+    <div class="content-section">
+      <div class="section-header">影像诊断</div>
+      <div class="diagnosis-section">
+        <div class="diagnosis-item">
+          <span class="diagnosis-number">1.</span>右肺下叶肺炎，考虑细菌性肺炎可能性大。
+        </div>
+        <div class="diagnosis-item">
+          <span class="diagnosis-number">2.</span>右侧少量胸腔积液。
+        </div>
+      </div>
+    </div>
+
+    <!-- 建议 -->
+    <div class="suggestion-box">
+      <div class="suggestion-title">建议：</div>
+      <div>1. 结合临床症状、体征及实验室检查（血常规、CRP、降钙素原等）综合判断；</div>
+      <div>2. 建议完善胸部CT检查，进一步明确病变范围及性质；</div>
+      <div>3. 必要时行痰培养+药敏试验，指导抗感染治疗；</div>
+      <div>4. 治疗后1-2周复查胸片，评估疗效及病灶吸收情况。</div>
+    </div>
+
+    <!-- 签名区 -->
+    <div class="signature-area">
+      <div class="signature-item">
+        <span class="signature-label">诊断医师：</span>
+        <span class="signature-line">刘建国</span>
+        <span style="color: #999; font-size: 12px;">副主任医师</span>
+      </div>
+      <div class="signature-item">
+        <span class="signature-label">审核医师：</span>
+        <span class="signature-line"></span>
+        <span style="color: #999; font-size: 12px;">主任医师</span>
+      </div>
+    </div>
+
+    <div style="text-align: right; margin-top: 16px; font-size: 13px; color: #666;">
+      报告日期：2026年3月15日
+    </div>
+
+    <!-- 页脚说明 -->
+    <div class="report-footer">
+      <div>注意事项：</div>
+      <div>1. 本报告仅供临床参考，最终诊断需结合临床及其他检查综合判断。</div>
+      <div>2. 如对本报告有疑问，请在收到报告后7日内与放射科联系。</div>
+      <div>3. 报告解释权归本院放射科所有。</div>
+    </div>
+  </div>
+
+  <script>
+    function toggleEdit() {
+      alert('编辑功能开发中');
+    }
+  </script>
+</body>
+</html>
